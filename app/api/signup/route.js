@@ -1,7 +1,6 @@
-import { promises as fs } from 'fs'
-import path from 'path'
-
-const SIGNUPS_FILE = path.join(process.cwd(), 'data', 'signups.json')
+// In-memory signup store for demo/draft
+// In production, replace with a database (Supabase, Planetscale, etc.)
+const signups = []
 
 export async function POST(request) {
   try {
@@ -17,29 +16,19 @@ export async function POST(request) {
       return Response.json({ error: 'Invalid email address' }, { status: 400 })
     }
 
-    // Store signup (file-based for now, swap for DB later)
-    const dataDir = path.join(process.cwd(), 'data')
-    await fs.mkdir(dataDir, { recursive: true })
+    const normalized = email.toLowerCase().trim()
 
-    let signups = []
-    try {
-      const existing = await fs.readFile(SIGNUPS_FILE, 'utf-8')
-      signups = JSON.parse(existing)
-    } catch {
-      // File doesn't exist yet, start fresh
-    }
-
-    // Check for duplicate
-    if (signups.some((s) => s.email === email.toLowerCase())) {
+    // Check for duplicate (in-memory only — resets on redeploy)
+    if (signups.some((s) => s.email === normalized)) {
       return Response.json({ message: 'Already signed up' })
     }
 
     signups.push({
-      email: email.toLowerCase(),
+      email: normalized,
       signedUpAt: new Date().toISOString(),
     })
 
-    await fs.writeFile(SIGNUPS_FILE, JSON.stringify(signups, null, 2))
+    console.log(`New signup: ${normalized} (total: ${signups.length})`)
 
     return Response.json({ message: 'Signed up successfully' })
   } catch (error) {
