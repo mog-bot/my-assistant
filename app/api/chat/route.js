@@ -3,7 +3,14 @@ import { rateLimit } from '@/lib/rate-limit'
 import { sanitizeInput } from '@/lib/validation'
 import { GROQ_MODEL, MAX_MESSAGE_LENGTH, MAX_CONTEXT_LENGTH } from '@/lib/constants'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+// Lazy init — avoid crashing at build time when env vars aren't set
+let groq
+function getGroq() {
+  if (!groq) {
+    groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+  }
+  return groq
+}
 
 export async function POST(request) {
   // Rate limit by IP
@@ -30,7 +37,7 @@ export async function POST(request) {
       ? `You are a helpful AI assistant for a business. Answer customer questions based ONLY on the following business information. Be friendly, concise, and helpful. If the answer is not in the business information below, say "I don't have that information, but you can contact the business directly for help."\n\nBusiness Information:\n${context}`
       : `You are a helpful AI assistant. Answer questions concisely and helpfully.`
 
-    const completion = await groq.chat.completions.create({
+    const completion = await getGroq().chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
