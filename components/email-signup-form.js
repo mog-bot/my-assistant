@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useThemeStyles } from './theme-provider'
 
 export function EmailSignupForm() {
   const [email, setEmail] = useState('')
-  const [formState, setFormState] = useState('idle') // idle | submitting | success | error
+  const [formState, setFormState] = useState('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const t = useThemeStyles()
 
   const handleSubmit = useCallback(
     async (e) => {
@@ -44,9 +46,9 @@ export function EmailSignupForm() {
       <div
         role="status"
         aria-live="polite"
-        className="bg-green-500/20 border border-green-500/50 rounded-lg p-6 max-w-md mx-auto"
+        className={`${t.accentBg}/20 border ${t.accentBorder} rounded-lg p-6 max-w-md mx-auto`}
       >
-        <p className="text-green-300 text-lg">
+        <p className={`${t.accent} text-lg`}>
           You&apos;re on the list! We&apos;ll be in touch soon.
         </p>
       </div>
@@ -75,12 +77,12 @@ export function EmailSignupForm() {
           aria-invalid={formState === 'error' ? 'true' : undefined}
           aria-describedby={formState === 'error' ? 'signup-error' : undefined}
           disabled={formState === 'submitting'}
-          className="px-6 py-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 flex-1 focus:outline-none focus:border-purple-400 disabled:opacity-50"
+          className={`px-6 py-4 rounded-lg ${t.inputBg} border ${t.inputBorder} ${t.text} placeholder-gray-400 flex-1 focus:outline-none ${t.inputFocus} disabled:opacity-50 ${t.font}`}
         />
         <button
           type="submit"
           disabled={formState === 'submitting'}
-          className="px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`px-8 py-4 ${t.accentBg} ${t.accentHover} text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${t.glow}`}
         >
           {formState === 'submitting' ? 'Joining...' : 'Get Started Free'}
         </button>

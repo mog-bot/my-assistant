@@ -1,15 +1,18 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useThemeStyles } from '@/components/theme-provider'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export default function Dashboard() {
   const [websiteUrl, setWebsiteUrl] = useState('')
-  const [status, setStatus] = useState('idle') // idle | scraping | training | ready | error
+  const [status, setStatus] = useState('idle')
   const [businessData, setBusinessData] = useState(null)
   const [error, setError] = useState('')
   const [testMessage, setTestMessage] = useState('')
   const [chatMessages, setChatMessages] = useState([])
   const [chatLoading, setChatLoading] = useState(false)
+  const t = useThemeStyles()
 
   const handleScrape = useCallback(async (e) => {
     e.preventDefault()
@@ -17,7 +20,6 @@ export default function Dashboard() {
     setError('')
 
     try {
-      // Ensure URL has protocol
       let url = websiteUrl.trim()
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = 'https://' + url
@@ -78,21 +80,26 @@ export default function Dashboard() {
   const embedCode = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-agent-id="demo"></script>`
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white">
-      <nav className="border-b border-white/10 px-8 py-4">
+    <main className={`min-h-screen ${t.bg} ${t.text} ${t.font}`}>
+      <nav className={`border-b ${t.navBorder} px-8 py-4`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-xl font-bold">My Assistant</a>
-          <span className="text-sm text-gray-400">Dashboard</span>
+          <a href="/" className={`text-xl font-bold ${t.text}`}>
+            <span className={t.accent}>&gt;_</span> My Assistant
+          </a>
+          <div className="flex items-center gap-4">
+            <span className={`text-sm ${t.textMuted}`}>Dashboard</span>
+            <ThemeToggle />
+          </div>
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-8 py-12">
-        <h1 className="text-3xl font-bold mb-8">Set Up Your AI Agent</h1>
+        <h1 className={`text-3xl font-bold mb-8 ${t.text}`}>Set Up Your AI Agent</h1>
 
         {/* Step 1: Connect Website */}
         <section className="mb-12">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-3">
-            <span className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+          <h2 className={`text-xl font-semibold mb-4 flex items-center gap-3 ${t.text}`}>
+            <span className={`w-8 h-8 ${t.accentBg} rounded-full flex items-center justify-center text-sm font-bold text-white`}>1</span>
             Connect Your Website
           </h2>
           <form onSubmit={handleScrape} className="flex gap-4">
@@ -101,14 +108,14 @@ export default function Dashboard() {
               value={websiteUrl}
               onChange={(e) => setWebsiteUrl(e.target.value)}
               placeholder="yourwebsite.com"
-              className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+              className={`flex-1 px-4 py-3 rounded-lg ${t.inputBg} border ${t.inputBorder} ${t.text} placeholder-gray-400 focus:outline-none ${t.inputFocus}`}
               disabled={status === 'scraping'}
               required
             />
             <button
               type="submit"
               disabled={status === 'scraping'}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-semibold transition-colors disabled:opacity-50"
+              className={`px-6 py-3 ${t.accentBg} ${t.accentHover} text-white rounded-lg font-semibold transition-colors disabled:opacity-50`}
             >
               {status === 'scraping' ? 'Scanning...' : 'Scan Website'}
             </button>
@@ -121,20 +128,20 @@ export default function Dashboard() {
         {/* Step 2: Review Data */}
         {businessData && (
           <section className="mb-12">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-3">
-              <span className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+            <h2 className={`text-xl font-semibold mb-4 flex items-center gap-3 ${t.text}`}>
+              <span className={`w-8 h-8 ${t.accentBg} rounded-full flex items-center justify-center text-sm font-bold text-white`}>2</span>
               Your Business Data
             </h2>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <h3 className="font-semibold text-lg mb-1">{businessData.title || 'Untitled'}</h3>
-              <p className="text-gray-400 text-sm mb-4">{businessData.description || 'No description found'}</p>
-              <div className="bg-black/30 rounded-lg p-4 max-h-48 overflow-y-auto">
-                <p className="text-gray-300 text-sm whitespace-pre-wrap">
+            <div className={`${t.cardBg} border ${t.cardBorder} rounded-xl p-6`}>
+              <h3 className={`font-semibold text-lg mb-1 ${t.text}`}>{businessData.title || 'Untitled'}</h3>
+              <p className={`${t.textMuted} text-sm mb-4`}>{businessData.description || 'No description found'}</p>
+              <div className={`${t.codeBg} rounded-lg p-4 max-h-48 overflow-y-auto`}>
+                <p className={`${t.textMuted} text-sm whitespace-pre-wrap`}>
                   {businessData.content?.slice(0, 1000) || 'No content extracted'}
                   {businessData.content?.length > 1000 && '...'}
                 </p>
               </div>
-              <p className="text-gray-500 text-xs mt-2">
+              <p className={`${t.textSubtle} text-xs mt-2`}>
                 {businessData.content?.length || 0} characters extracted •{' '}
                 {businessData.internalLinks?.length || 0} internal pages found
               </p>
@@ -145,15 +152,14 @@ export default function Dashboard() {
         {/* Step 3: Test Your Agent */}
         {status === 'ready' && (
           <section className="mb-12">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-3">
-              <span className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+            <h2 className={`text-xl font-semibold mb-4 flex items-center gap-3 ${t.text}`}>
+              <span className={`w-8 h-8 ${t.accentBg} rounded-full flex items-center justify-center text-sm font-bold text-white`}>3</span>
               Test Your Agent
             </h2>
-            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-              {/* Chat messages */}
+            <div className={`${t.cardBg} border ${t.cardBorder} rounded-xl overflow-hidden`}>
               <div className="p-6 min-h-[200px] max-h-[400px] overflow-y-auto space-y-4">
                 {chatMessages.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">
+                  <p className={`${t.textSubtle} text-center py-8`}>
                     Ask your agent a question about your business
                   </p>
                 )}
@@ -165,8 +171,8 @@ export default function Dashboard() {
                     <div
                       className={`max-w-[80%] px-4 py-3 rounded-xl ${
                         msg.role === 'user'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white/10 text-gray-200'
+                          ? `${t.accentBg} text-white`
+                          : `${t.cardBg} border ${t.cardBorder} ${t.text}`
                       }`}
                     >
                       {msg.content}
@@ -175,26 +181,25 @@ export default function Dashboard() {
                 ))}
                 {chatLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-white/10 px-4 py-3 rounded-xl text-gray-400">
+                    <div className={`${t.cardBg} border ${t.cardBorder} px-4 py-3 rounded-xl ${t.textMuted}`}>
                       Thinking...
                     </div>
                   </div>
                 )}
               </div>
-              {/* Chat input */}
-              <form onSubmit={handleChat} className="border-t border-white/10 p-4 flex gap-3">
+              <form onSubmit={handleChat} className={`border-t ${t.navBorder} p-4 flex gap-3`}>
                 <input
                   type="text"
                   value={testMessage}
                   onChange={(e) => setTestMessage(e.target.value)}
                   placeholder="Ask a question about your business..."
-                  className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                  className={`flex-1 px-4 py-3 rounded-lg ${t.inputBg} border ${t.inputBorder} ${t.text} placeholder-gray-400 focus:outline-none ${t.inputFocus}`}
                   disabled={chatLoading}
                 />
                 <button
                   type="submit"
                   disabled={chatLoading || !testMessage.trim()}
-                  className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                  className={`px-6 py-3 ${t.accentBg} ${t.accentHover} text-white rounded-lg font-semibold transition-colors disabled:opacity-50`}
                 >
                   Send
                 </button>
@@ -206,18 +211,18 @@ export default function Dashboard() {
         {/* Step 4: Embed */}
         {status === 'ready' && (
           <section className="mb-12">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-3">
-              <span className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm font-bold">4</span>
+            <h2 className={`text-xl font-semibold mb-4 flex items-center gap-3 ${t.text}`}>
+              <span className={`w-8 h-8 ${t.accentBg} rounded-full flex items-center justify-center text-sm font-bold text-white`}>4</span>
               Add to Your Website
             </h2>
-            <p className="text-gray-400 mb-4">
-              Copy this code and paste it before the closing <code className="text-purple-400">&lt;/body&gt;</code> tag on your website.
+            <p className={`${t.textMuted} mb-4`}>
+              Copy this code and paste it before the closing <code className={t.accent}>&lt;/body&gt;</code> tag on your website.
             </p>
-            <div className="bg-black/50 border border-white/10 rounded-xl p-4 font-mono text-sm text-green-400 relative">
+            <div className={`${t.codeBg} border ${t.cardBorder} rounded-xl p-4 ${t.font} text-sm ${t.codeText} relative`}>
               <code>{embedCode}</code>
               <button
                 onClick={() => navigator.clipboard?.writeText(embedCode)}
-                className="absolute top-3 right-3 px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs text-gray-300 transition-colors"
+                className={`absolute top-3 right-3 px-3 py-1 ${t.inputBg} ${t.cardHover} rounded text-xs ${t.textMuted} transition-colors`}
               >
                 Copy
               </button>
