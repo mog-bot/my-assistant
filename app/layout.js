@@ -1,5 +1,6 @@
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
+import Script from 'next/script'
 
 export const metadata = {
   title: 'My Assistant - AI Agents for Your Business',
@@ -13,6 +14,12 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           {children}
         </ThemeProvider>
+        <Script
+          src="/widget.js"
+          data-agent-id="demo"
+          data-greeting="Hey! 👋 I'm a demo of My Assistant. Ask me anything about the product!"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   )

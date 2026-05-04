@@ -117,6 +117,11 @@
   let isOpen = false
   let context = null // loaded on first open
 
+  // Demo mode context — baked-in product info
+  const DEMO_CONTEXT = agentId === 'demo'
+    ? 'My Assistant is an AI-powered platform that gives businesses their own custom AI chatbot trained on their data. Setup takes minutes — just paste your website URL, we scrape it, and your AI agent is ready. Embed it with one line of code. Free tier: 1 agent, 50 messages/month. Pro ($29/mo): 3 agents, unlimited messages, lead capture, custom branding. Business ($79/mo): unlimited agents, white-label, API access, human handoff. No coding required. Works on any website. Currently in early access.'
+    : null
+
   fab.addEventListener('click', () => {
     isOpen = !isOpen
     chat.classList.toggle('open', isOpen)
@@ -165,7 +170,7 @@
       const res = await fetch(`${baseUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, context: context || '' }),
+        body: JSON.stringify({ message: text, context: DEMO_CONTEXT || context || '' }),
       })
 
       const data = await res.json()
