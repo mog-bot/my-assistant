@@ -15,7 +15,7 @@
 
   // Determine API base URL from script src
   const scriptSrc = script?.src || ''
-  const baseUrl = scriptSrc ? new URL(scriptSrc).origin : window.location.origin
+  const baseUrl = scriptSrc && scriptSrc.startsWith('http') ? new URL(scriptSrc).origin : window.location.origin
 
   // Inject styles
   const style = document.createElement('style')
