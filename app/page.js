@@ -63,7 +63,7 @@ export default function Home() {
               Open Dashboard
             </a>
           </div>
-          <p className={`${t.textSubtle} mt-4 text-sm`}>No credit card required. Free tier available.</p>
+          <p className={`${t.textSubtle} mt-4 text-sm`}>$20.50/week. Cancel anytime.</p>
         </section>
 
         {/* Features */}
@@ -102,9 +102,9 @@ export default function Home() {
             Simple Pricing
           </h2>
           <p className={`${t.textMuted} text-center mb-12 max-w-xl mx-auto`}>
-            Start free. Scale when you&apos;re ready.
+            One plan. One price. Everything included.
           </p>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="max-w-md mx-auto">
             {PRICING_TIERS.map((tier) => (
               <PricingCard key={tier.tier} {...tier} />
             ))}

@@ -2,7 +2,7 @@
 
 import { useThemeStyles } from './theme-provider'
 
-export function PricingCard({ tier, price, features, highlighted }) {
+export function PricingCard({ tier, price, priceSuffix, features, highlighted }) {
   const t = useThemeStyles()
 
   return (
@@ -20,8 +20,13 @@ export function PricingCard({ tier, price, features, highlighted }) {
       >
         {tier}
       </h3>
-      <div className={`text-4xl font-bold mb-6 ${highlighted ? 'text-white' : t.text}`}>
-        {price}
+      <div className={`mb-6 ${highlighted ? 'text-white' : t.text}`}>
+        <span className="text-4xl font-bold">{price}</span>
+        {priceSuffix && (
+          <span className={`text-lg ml-1 ${highlighted ? 'text-white/80' : t.textMuted}`}>
+            {priceSuffix}
+          </span>
+        )}
       </div>
       <ul className="space-y-3">
         {features.map((f, i) => (

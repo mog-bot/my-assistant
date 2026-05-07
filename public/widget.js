@@ -26,9 +26,9 @@ My Assistant is an AI-powered platform that gives businesses their own custom AI
 
 How it works: Sign up > Go to Dashboard > Paste website URL > Test your agent > Copy embed code > Paste on your site. Done.
 
-Pricing: Free tier (1 agent, 50 msgs/month). Pro $29/mo (3 agents, unlimited msgs, lead capture, custom branding). Business $79/mo (unlimited agents, white-label, API access, human handoff).
+Pricing: One simple plan at $20.50/week. Includes your own custom AI agent trained on your business data, unlimited messages, unlimited conversations, one-click install, lead capture, custom branding, and priority support.
 
-No coding required. Works on any website. Currently in early access.
+Currently in early access.
 
 SETUP GUIDE:
 The embed code: <script src="https://my-assistant-bhre.vercel.app/widget.js" data-agent-id="demo"></script>

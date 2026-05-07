@@ -29,9 +29,9 @@ Key features:
 - Your data stays private
 
 Pricing:
-- Starter (Free): 1 AI agent, 50 messages/month, website scraping, basic widget, "Powered by My Assistant" badge
-- Pro ($29/mo): 3 agents, unlimited messages, lead capture, custom branding, weekly insights, priority support
-- Business ($79/mo): Unlimited agents, unlimited messages, white-label widget, API access, human handoff, dedicated support
+- One simple plan: $20.50/week
+- Includes: your own custom AI agent, trained on your business data, unlimited messages, unlimited conversations, one-click install, lead capture, custom branding, priority support
+- No free tier, no multiple plans — just one straightforward price
 
 Currently in early access — sign up to get started.
 
