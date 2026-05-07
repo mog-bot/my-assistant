@@ -1,6 +1,5 @@
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
-import { WidgetLoader } from '@/components/widget-loader'
 
 export const metadata = {
   title: 'My Assistant - AI Agents for Your Business',
@@ -14,7 +13,6 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           {children}
         </ThemeProvider>
-        <WidgetLoader />
       </body>
     </html>
   )

@@ -6,6 +6,7 @@ import { StepCard } from '@/components/step-card'
 import { PricingCard } from '@/components/pricing-card'
 import { EmailSignupForm } from '@/components/email-signup-form'
 import { MatrixRain } from '@/components/matrix-rain'
+import { DemoChatBot } from '@/components/demo-chat-bot'
 import { useThemeStyles } from '@/components/theme-provider'
 import { FEATURES, STEPS, PRICING_TIERS } from '@/lib/constants'
 
@@ -94,6 +95,9 @@ export default function Home() {
           <p>&copy; 2026 My Assistant. All rights reserved.</p>
         </footer>
       </div>
+
+      {/* Floating AI Chat Demo */}
+      <DemoChatBot />
     </main>
   )
 }

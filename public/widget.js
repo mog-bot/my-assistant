@@ -1,5 +1,5 @@
 // My Assistant — Embeddable Chat Widget
-// Usage: <script src="https://your-domain.com/widget.js" data-agent-id="demo"></script>
+// Usage: <script src="https://my-assistant-bhre.vercel.app/widget.js" data-agent-id="demo"></script>
 (function () {
   'use strict'
 
@@ -16,6 +16,33 @@
   // Determine API base URL from script src
   const scriptSrc = script?.src || ''
   const baseUrl = scriptSrc && scriptSrc.startsWith('http') ? new URL(scriptSrc).origin : window.location.origin
+
+  // Demo mode context — full product + setup knowledge
+  const DEMO_CONTEXT = agentId === 'demo'
+    ? `You are the AI assistant for My Assistant. You help with product questions AND guide users on adding the chatbot to their website.
+
+PRODUCT INFO:
+My Assistant is an AI-powered platform that gives businesses their own custom AI chatbot trained on their data. Setup takes minutes — just paste your website URL, we scrape it, and your AI agent is ready. Embed it with one line of code.
+
+How it works: Sign up > Go to Dashboard > Paste website URL > Test your agent > Copy embed code > Paste on your site. Done.
+
+Pricing: Free tier (1 agent, 50 msgs/month). Pro $29/mo (3 agents, unlimited msgs, lead capture, custom branding). Business $79/mo (unlimited agents, white-label, API access, human handoff).
+
+No coding required. Works on any website. Currently in early access.
+
+SETUP GUIDE:
+The embed code: <script src="https://my-assistant-bhre.vercel.app/widget.js" data-agent-id="demo"></script>
+Paste it before </body> on any website.
+
+Customization: data-color (hex), data-position (right/left), data-greeting (custom message).
+
+WordPress: Appearance > Theme Editor > footer.php, or use "Insert Headers and Footers" plugin.
+Shopify: Online Store > Themes > Edit Code > theme.liquid.
+Wix: Settings > Custom Code > Body (end).
+Squarespace: Settings > Advanced > Code Injection > Footer.
+
+Be friendly, concise, and helpful. You ARE the product demo — be great at your job.`
+    : null
 
   // Inject styles
   const style = document.createElement('style')
@@ -47,16 +74,25 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .ma-header-title { color: white; font-weight: 600; font-size: 16px; }
+    .ma-header-sub { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 2px; }
     .ma-close { background: none; border: none; color: white; cursor: pointer; font-size: 20px; padding: 4px; }
     
     .ma-messages {
       flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
     }
     
-    .ma-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+    .ma-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; word-wrap: break-word; white-space: pre-wrap; }
     .ma-msg.user { align-self: flex-end; background: ${primaryColor}; color: white; border-bottom-right-radius: 4px; }
     .ma-msg.bot { align-self: flex-start; background: rgba(255,255,255,0.1); color: #e2e0ea; border-bottom-left-radius: 4px; }
     .ma-msg.typing { color: #888; font-style: italic; }
+    
+    .ma-suggestions { padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .ma-suggestion {
+      font-size: 12px; padding: 6px 12px; border-radius: 999px;
+      background: transparent; border: 1px solid ${primaryColor}; color: ${primaryColor};
+      cursor: pointer; transition: all 0.2s;
+    }
+    .ma-suggestion:hover { background: ${primaryColor}; color: white; }
     
     .ma-input-area {
       padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.1);
@@ -91,14 +127,22 @@
     <button class="ma-fab" aria-label="Open chat assistant">💬</button>
     <div class="ma-chat" role="dialog" aria-label="Chat with AI assistant">
       <div class="ma-header">
-        <span class="ma-header-title">My Assistant</span>
+        <div>
+          <div class="ma-header-title">My Assistant</div>
+          <div class="ma-header-sub">Ask about the product or how to set up</div>
+        </div>
         <button class="ma-close" aria-label="Close chat">&times;</button>
       </div>
       <div class="ma-messages">
         <div class="ma-msg bot">${greeting}</div>
       </div>
+      <div class="ma-suggestions">
+        <button class="ma-suggestion">How does it work?</button>
+        <button class="ma-suggestion">How do I add this to my site?</button>
+        <button class="ma-suggestion">What does it cost?</button>
+      </div>
       <div class="ma-input-area">
-        <input class="ma-input" type="text" placeholder="Type a message..." aria-label="Chat message" />
+        <input class="ma-input" type="text" placeholder="Ask me anything..." aria-label="Chat message" />
         <button class="ma-send" disabled>Send</button>
       </div>
       <div class="ma-badge"><a href="${baseUrl}" target="_blank" rel="noopener">Powered by My Assistant</a></div>
@@ -113,14 +157,11 @@
   const messages = container.querySelector('.ma-messages')
   const input = container.querySelector('.ma-input')
   const sendBtn = container.querySelector('.ma-send')
+  const suggestionsEl = container.querySelector('.ma-suggestions')
 
   let isOpen = false
-  let context = null // loaded on first open
-
-  // Demo mode context — baked-in product info
-  const DEMO_CONTEXT = agentId === 'demo'
-    ? 'My Assistant is an AI-powered platform that gives businesses their own custom AI chatbot trained on their data. Setup takes minutes — just paste your website URL, we scrape it, and your AI agent is ready. Embed it with one line of code. Free tier: 1 agent, 50 messages/month. Pro ($29/mo): 3 agents, unlimited messages, lead capture, custom branding. Business ($79/mo): unlimited agents, white-label, API access, human handoff. No coding required. Works on any website. Currently in early access.'
-    : null
+  let context = null
+  let messageCount = 0
 
   fab.addEventListener('click', () => {
     isOpen = !isOpen
@@ -147,6 +188,14 @@
 
   sendBtn.addEventListener('click', sendMessage)
 
+  // Handle suggestion clicks
+  suggestionsEl.querySelectorAll('.ma-suggestion').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      input.value = btn.textContent
+      sendMessage()
+    })
+  })
+
   function addMessage(text, role) {
     const div = document.createElement('div')
     div.className = `ma-msg ${role}`
@@ -156,9 +205,16 @@
     return div
   }
 
+  function hideSuggestions() {
+    if (suggestionsEl) suggestionsEl.style.display = 'none'
+  }
+
   async function sendMessage() {
     const text = input.value.trim()
     if (!text) return
+
+    messageCount++
+    if (messageCount >= 1) hideSuggestions()
 
     addMessage(text, 'user')
     input.value = ''
@@ -185,8 +241,6 @@
   // Load business context on first open (lazy)
   const observer = new MutationObserver(() => {
     if (chat.classList.contains('open') && !context) {
-      // Context would be loaded from the agent's stored data
-      // For now, it's passed via the chat API from stored scrape data
       context = ''
       observer.disconnect()
     }

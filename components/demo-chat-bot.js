@@ -3,30 +3,84 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useThemeStyles } from './theme-provider'
 
-const DEMO_CONTEXT = `My Assistant is an AI-powered platform that gives businesses their own custom AI chatbot.
+const SITE_KNOWLEDGE = `You are the AI assistant on the My Assistant website. You help visitors with TWO things:
 
-Key facts:
-- Businesses paste their website URL, we scrape it and train a custom AI agent on their data
-- The agent answers customer questions 24/7 on their website
-- Setup takes minutes, not months — just scan your site and embed one line of code
-- Captures leads by detecting buying intent
-- Free tier: 1 agent, 50 messages/month
-- Pro tier: $29/mo — 3 agents, unlimited messages, lead capture, custom branding
-- Business tier: $79/mo — unlimited agents, white-label, API access, human handoff
-- No coding required
-- Works on any website
-- Currently in early access — sign up with your email to get started`
+1. PRODUCT QUESTIONS — What My Assistant is, pricing, features, how it works
+2. SETUP GUIDE — How to add the My Assistant chatbot to their own website
+
+=== PRODUCT INFO ===
+My Assistant is an AI-powered platform that gives businesses their own custom AI chatbot.
+
+How it works:
+- Sign up with your email (free to start)
+- Go to the Dashboard (/dashboard)
+- Paste your website URL — we automatically scrape and learn your business data
+- Test your AI agent right in the dashboard to make sure it answers correctly
+- Copy the one-line embed code and paste it into your website
+- Your AI agent is now live, answering customer questions 24/7
+
+Key features:
+- Custom AI trained on YOUR business data
+- Lightning-fast responses (milliseconds)
+- One-line embed — no coding required
+- Lead capture (detects buying intent)
+- Works on any website (HTML, WordPress, Shopify, Wix, Squarespace, etc.)
+- 24/7 availability
+- Your data stays private
+
+Pricing:
+- Starter (Free): 1 AI agent, 50 messages/month, website scraping, basic widget, "Powered by My Assistant" badge
+- Pro ($29/mo): 3 agents, unlimited messages, lead capture, custom branding, weekly insights, priority support
+- Business ($79/mo): Unlimited agents, unlimited messages, white-label widget, API access, human handoff, dedicated support
+
+Currently in early access — sign up to get started.
+
+=== SETUP / INTEGRATION GUIDE ===
+When someone asks how to add the chatbot to their site, walk them through these steps:
+
+Step 1: Sign up on our homepage (scroll down to the email form, or click "Get Started")
+Step 2: Go to the Dashboard (link: /dashboard)
+Step 3: Enter your website URL and click "Scan Website" — we'll automatically extract your business info
+Step 4: Test your agent — ask it questions to make sure it knows your business
+Step 5: Copy the embed code shown in Step 4 of the dashboard
+Step 6: Paste this code into your website, just before the closing </body> tag
+
+The embed code looks like this:
+<script src="https://my-assistant-bhre.vercel.app/widget.js" data-agent-id="demo"></script>
+
+Optional customization attributes:
+- data-color="#7c3aed" (change the accent color — any hex color)
+- data-position="right" (or "left" — where the chat button appears)
+- data-greeting="Hi! How can I help?" (custom first message)
+
+Example with customization:
+<script src="https://my-assistant-bhre.vercel.app/widget.js" data-agent-id="demo" data-color="#2563eb" data-position="right" data-greeting="Welcome! Ask me anything."></script>
+
+Platform-specific instructions:
+- WordPress: Go to Appearance > Theme Editor > footer.php, paste before </body>. Or use "Insert Headers and Footers" plugin.
+- Shopify: Go to Online Store > Themes > Edit Code > theme.liquid, paste before </body>
+- Wix: Go to Settings > Custom Code > Add Code > paste in Body (end)
+- Squarespace: Go to Settings > Advanced > Code Injection > Footer, paste there
+- HTML: Just paste before </body> in your HTML file
+
+=== BEHAVIOR ===
+- Be friendly, helpful, and concise
+- Use emojis sparingly (one per message max)
+- If they ask something you don't know, say "I don't have that info, but you can email us for help!"
+- Always encourage them to try the dashboard
+- You ARE the product demo — show them how good an AI assistant can be by being great at your job`
 
 const SUGGESTED_QUESTIONS = [
   'How does it work?',
+  'How do I add this to my site?',
   'What does it cost?',
-  'Can I try it free?',
+  'Show me the embed code',
 ]
 
 export function DemoChatBot() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { role: 'bot', content: "Hey! 👋 I'm a demo of My Assistant. Ask me anything about the product — this is exactly what your customers would see on your site." },
+    { role: 'bot', content: "Hey! 👋 I'm a live demo of My Assistant — exactly what your customers would see on your site. Ask me anything about the product, or I can walk you through adding this chatbot to your own website!" },
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -60,7 +114,7 @@ export function DemoChatBot() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, context: DEMO_CONTEXT }),
+        body: JSON.stringify({ message: trimmed, context: SITE_KNOWLEDGE }),
       })
 
       const data = await res.json()
@@ -71,7 +125,7 @@ export function DemoChatBot() {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'bot', content: "Couldn't connect right now. Try again in ec." },
+        { role: 'bot', content: "Couldn't connect right now. Try again in a sec." },
       ])
     } finally {
       setIsLoading(false)
@@ -102,15 +156,15 @@ export function DemoChatBot() {
       {isOpen && (
         <div
           role="dialog"
-          aria-label="Demo chat with My Assistant"
-          className={`fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-48px)] h-[480px] max-h-[calc(100vh-120px)] rounded-2xl border ${t.cardBorder} shadow-2xl ${t.glowStrong} flex flex-col overflow-hidden`}
+          aria-label="Chat with My Assistant"
+          className={`fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-48px)] h-[520px] max-h-[calc(100vh-120px)] rounded-2xl border ${t.cardBorder} shadow-2xl ${t.glowStrong} flex flex-col overflow-hidden`}
           style={{ background: 'var(--chat-bg, #0f0d1a)' }}
         >
           {/* Header */}
           <div className={`${t.accentBg} px-5 py-4 flex items-center justify-between shrink-0`}>
             <div>
-              <p className="text-white font-semibold text-sm">My Assistant Demo</p>
-              <p className="text-white/70 text-xs">See it in action</p>
+              <p className="text-white font-semibold text-sm">My Assistant</p>
+              <p className="text-white/70 text-xs">Ask about the product or how to set up</p>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -126,7 +180,7 @@ export function DemoChatBot() {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed ${
+                  className={`max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.role === 'user'
                       ? `${t.accentBg} text-white rounded-2xl rounded-br-md`
                       : 'bg-white/10 text-gray-200 rounded-2xl rounded-bl-md'
@@ -146,7 +200,7 @@ export function DemoChatBot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Suggested Questions (show only when few messages) */}
+          {/* Suggested Questions (show only at start) */}
           {messages.length <= 2 && !isLoading && (
             <div className="px-4 pb-2 flex flex-wrap gap-2 shrink-0" style={{ background: '#0f0d1a' }}>
               {SUGGESTED_QUESTIONS.map((q) => (
