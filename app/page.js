@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Navbar } from '@/components/navbar'
 import { FeatureCard } from '@/components/feature-card'
 import { StepCard } from '@/components/step-card'
@@ -7,11 +8,13 @@ import { PricingCard } from '@/components/pricing-card'
 import { EmailSignupForm } from '@/components/email-signup-form'
 import { MatrixRain } from '@/components/matrix-rain'
 import { DemoChatBot } from '@/components/demo-chat-bot'
+import { InstallModal } from '@/components/install-modal'
 import { useThemeStyles } from '@/components/theme-provider'
 import { FEATURES, STEPS, PRICING_TIERS } from '@/lib/constants'
 
 export default function Home() {
   const t = useThemeStyles()
+  const [installOpen, setInstallOpen] = useState(false)
 
   return (
     <main className={`min-h-screen ${t.bgGradient} relative`}>
@@ -42,6 +45,24 @@ export default function Home() {
             questions 24/7. Set up in minutes, not months.
           </p>
           <EmailSignupForm />
+          <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+            <button
+              onClick={() => setInstallOpen(true)}
+              className={`px-6 py-3 ${t.accentBg} ${t.accentHover} text-white rounded-lg font-semibold transition-colors shadow-lg ${t.glow} flex items-center gap-2`}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              Install on Your Website
+            </button>
+            <span className={`${t.textSubtle} text-sm`}>or</span>
+            <a
+              href="/dashboard"
+              className={`px-6 py-3 border ${t.accentBorder} ${t.accent} rounded-lg font-semibold hover:bg-white/5 transition-colors`}
+            >
+              Open Dashboard
+            </a>
+          </div>
           <p className={`${t.textSubtle} mt-4 text-sm`}>No credit card required. Free tier available.</p>
         </section>
 
@@ -98,6 +119,9 @@ export default function Home() {
 
       {/* Floating AI Chat Demo */}
       <DemoChatBot />
+
+      {/* Install Modal */}
+      <InstallModal isOpen={installOpen} onClose={() => setInstallOpen(false)} />
     </main>
   )
 }
