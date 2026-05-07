@@ -11,7 +11,7 @@
   const agentId = script?.getAttribute('data-agent-id') || 'demo'
   const primaryColor = script?.getAttribute('data-color') || '#7c3aed'
   const position = script?.getAttribute('data-position') || 'right' // right | left
-  const greeting = script?.getAttribute('data-greeting') || 'Hi! How can I help you today?'
+  const greeting = script?.getAttribute('data-greeting') || 'Welcome. How can I help you today?'
 
   // Determine API base URL from script src
   const scriptSrc = script?.src || ''
@@ -41,7 +41,7 @@ Shopify: Online Store > Themes > Edit Code > theme.liquid.
 Wix: Settings > Custom Code > Body (end).
 Squarespace: Settings > Advanced > Code Injection > Footer.
 
-Be friendly, concise, and helpful. You ARE the product demo — be great at your job.`
+Be professional, helpful, and concise. Do NOT use emojis. Demonstrate value through clear, knowledgeable responses.`
     : null
 
   // Inject styles
@@ -124,7 +124,7 @@ Be friendly, concise, and helpful. You ARE the product demo — be great at your
   const container = document.createElement('div')
   container.id = WIDGET_ID
   container.innerHTML = `
-    <button class="ma-fab" aria-label="Open chat assistant">💬</button>
+    <button class="ma-fab" aria-label="Open chat assistant"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
     <div class="ma-chat" role="dialog" aria-label="Chat with AI assistant">
       <div class="ma-header">
         <div>
@@ -166,14 +166,14 @@ Be friendly, concise, and helpful. You ARE the product demo — be great at your
   fab.addEventListener('click', () => {
     isOpen = !isOpen
     chat.classList.toggle('open', isOpen)
-    fab.textContent = isOpen ? '✕' : '💬'
+    fab.innerHTML = isOpen ? '✕' : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
     if (isOpen) input.focus()
   })
 
   closeBtn.addEventListener('click', () => {
     isOpen = false
     chat.classList.remove('open')
-    fab.textContent = '💬'
+    fab.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
   })
 
   input.addEventListener('input', () => {

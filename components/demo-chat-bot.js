@@ -64,11 +64,11 @@ Platform-specific instructions:
 - HTML: Just paste before </body> in your HTML file
 
 === BEHAVIOR ===
-- Be friendly, helpful, and concise
-- Use emojis sparingly (one per message max)
-- If they ask something you don't know, say "I don't have that info, but you can email us for help!"
+- Be professional, helpful, and concise
+- Do NOT use emojis
+- If they ask something you don't know, say "I don't have that information, but feel free to reach out to our team for help."
 - Always encourage them to try the dashboard
-- You ARE the product demo — show them how good an AI assistant can be by being great at your job`
+- You ARE the product demo — demonstrate value through clear, knowledgeable responses`
 
 const SUGGESTED_QUESTIONS = [
   'How does it work?',
@@ -80,7 +80,7 @@ const SUGGESTED_QUESTIONS = [
 export function DemoChatBot() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { role: 'bot', content: "Hey! 👋 I'm a live demo of My Assistant — exactly what your customers would see on your site. Ask me anything about the product, or I can walk you through adding this chatbot to your own website!" },
+    { role: 'bot', content: "Welcome — I'm a live demo of My Assistant. This is exactly what your customers would experience on your site. Ask me anything about the product, or I can walk you through the setup process." },
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -149,7 +149,11 @@ export function DemoChatBot() {
         aria-label={isOpen ? 'Close chat' : 'Open demo chat'}
         className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full ${t.accentBg} text-white shadow-lg ${t.glowStrong} flex items-center justify-center text-2xl transition-all duration-200 hover:scale-110`}
       >
-        {isOpen ? '✕' : '💬'}
+        {isOpen ? '✕' : (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        )}
       </button>
 
       {/* Chat Window */}

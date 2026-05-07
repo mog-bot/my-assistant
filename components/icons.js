@@ -101,12 +101,12 @@ export function RocketIcon({ className = '' }) {
 
 // Map feature titles to icons
 export const FEATURE_ICONS = {
-  'Trained on YOUR Data': BrainIcon,
+  'Trained on Your Data': BrainIcon,
   'Lightning Fast': BoltIcon,
   'One-Line Embed': PlugIcon,
   'Your Data Stays Yours': ShieldIcon,
   'Captures Leads': ChartIcon,
-  '24/7 Availability': GlobeIcon,
+  'Always Available': GlobeIcon,
 }
 
 // Map step numbers to icons
