@@ -57,10 +57,10 @@ export default function Home() {
             </button>
             <span className={`${t.textSubtle} text-sm`}>or</span>
             <a
-              href="/dashboard"
+              href="/create"
               className={`px-6 py-3 border ${t.accentBorder} ${t.accent} rounded-lg font-semibold hover:bg-white/5 transition-colors`}
             >
-              Open Dashboard
+              Create Your Agent
             </a>
           </div>
           <p className={`${t.textSubtle} mt-4 text-sm`}>$20.50/week. Cancel anytime.</p>
