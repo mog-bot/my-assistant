@@ -16,7 +16,7 @@
   const botName = script?.getAttribute('data-name') || 'AI Assistant'
   const extraContext = script?.getAttribute('data-extra-context') || ''
 
-  // Determine API base URL from script src (always points to our API, never the host site)
+  // Determine API base URL from script src
   const scriptSrc = script?.src || ''
   const baseUrl = scriptSrc && scriptSrc.startsWith('http') ? new URL(scriptSrc).origin : 'https://my-assistant-bhre.vercel.app'
 
@@ -26,15 +26,11 @@
       const title = document.title || ''
       const metaDesc = document.querySelector('meta[name="description"]')?.content || ''
 
-      // Clone body and remove non-content elements
       const clone = document.body.cloneNode(true)
       const remove = clone.querySelectorAll('script, style, nav, footer, iframe, noscript, svg, #' + WIDGET_ID)
       remove.forEach(el => el.remove())
 
-      // Get clean text content
       const bodyText = clone.textContent.replace(/\s+/g, ' ').trim()
-
-      // Cap at 12000 chars to stay within API limits
       const content = bodyText.slice(0, 12000)
 
       let ctx = `Business Name: ${title}\nDescription: ${metaDesc}\n\nWebsite Content:\n${content}`
@@ -55,7 +51,16 @@
     document.addEventListener('DOMContentLoaded', () => { PAGE_CONTEXT = scrapeHostPage() })
   }
 
-  // Inject styles — WhatsApp-style design
+  // Helper: lighten/darken colour for hover states
+  function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : { r: 124, g: 58, b: 237 }
+  }
+
+  const rgb = hexToRgb(primaryColor)
+  const colorRgb = `${rgb.r}, ${rgb.g}, ${rgb.b}`
+
+  // Inject styles — Clean modern dark design
   const style = document.createElement('style')
   style.textContent = `
     #${WIDGET_ID} { all: initial; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
@@ -63,105 +68,104 @@
 
     .ma-fab {
       position: fixed; bottom: 24px; ${position}: 24px; z-index: 2147483647;
-      width: 60px; height: 60px; border-radius: 50%;
-      background: #25D366; color: white; border: none; cursor: pointer;
-      box-shadow: 0 4px 12px rgba(37,211,102,0.4);
+      width: 56px; height: 56px; border-radius: 50%;
+      background: ${primaryColor}; color: white; border: none; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(${colorRgb}, 0.4), 0 0 0 0 rgba(${colorRgb}, 0);
       display: flex; align-items: center; justify-content: center;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .ma-fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(37,211,102,0.5); }
+    .ma-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(${colorRgb}, 0.5); }
 
     .ma-chat {
-      position: fixed; bottom: 96px; ${position}: 24px; z-index: 2147483647;
+      position: fixed; bottom: 92px; ${position}: 24px; z-index: 2147483647;
       width: 380px; max-width: calc(100vw - 48px); height: 520px; max-height: calc(100vh - 120px);
-      background: #ffffff; border-radius: 16px;
+      background: #0f0d1a; border-radius: 16px;
       display: none; flex-direction: column; overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
     }
     .ma-chat.open { display: flex; }
 
     .ma-header {
-      padding: 12px 16px; background: #075E54;
-      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px;
+      background: ${primaryColor};
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
     }
-    .ma-avatar {
-      width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.15);
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-weight: 700; font-size: 16px; flex-shrink: 0;
-    }
-    .ma-header-info { flex: 1; min-width: 0; }
-    .ma-header-title { color: white; font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .ma-header-status { color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 2px; }
-    .ma-close { background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer; font-size: 22px; padding: 4px 8px; line-height: 1; border-radius: 4px; flex-shrink: 0; }
-    .ma-close:hover { color: white; background: rgba(255,255,255,0.1); }
+    .ma-header-left { display: flex; align-items: center; gap: 10px; }
+    .ma-header-title { color: white; font-weight: 600; font-size: 15px; }
+    .ma-header-status { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+    .ma-header-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; animation: ma-pulse 2s infinite; }
+    .ma-header-status-text { color: rgba(255,255,255,0.75); font-size: 12px; }
+    .ma-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 20px; padding: 4px 8px; line-height: 1; border-radius: 6px; transition: all 0.15s; }
+    .ma-close:hover { color: white; background: rgba(255,255,255,0.15); }
+
+    @keyframes ma-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
     .ma-messages {
-      flex: 1; overflow-y: auto; padding: 12px 14px;
-      display: flex; flex-direction: column; gap: 6px;
-      background: #ECE5DD url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5c-1.3 0-2.4 1-2.4 2.4s1 2.4 2.4 2.4 2.4-1 2.4-2.4S31.3 5 30 5zm-15 15c-1.3 0-2.4 1-2.4 2.4s1 2.4 2.4 2.4 2.4-1 2.4-2.4S16.3 20 15 20zm30 0c-1.3 0-2.4 1-2.4 2.4s1 2.4 2.4 2.4 2.4-1 2.4-2.4S46.3 20 45 20zm-15 15c-1.3 0-2.4 1-2.4 2.4s1 2.4 2.4 2.4 2.4-1 2.4-2.4S31.3 35 30 35z' fill='%23d4cfc6' fill-opacity='0.15'/%3E%3C/svg%3E");
+      flex: 1; overflow-y: auto; padding: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+      background: #0f0d1a;
     }
-    .ma-messages::-webkit-scrollbar { width: 5px; }
-    .ma-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+    .ma-messages::-webkit-scrollbar { width: 4px; }
+    .ma-messages::-webkit-scrollbar-track { background: transparent; }
+    .ma-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
     .ma-msg {
-      max-width: 85%; padding: 6px 8px 4px 8px; font-size: 14px; line-height: 1.4;
-      word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap;
-      position: relative;
+      max-width: 85%; padding: 10px 14px; font-size: 14px; line-height: 1.5;
+      word-wrap: break-word; overflow-wrap: anywhere; white-space: pre-wrap;
     }
     .ma-msg.user {
-      align-self: flex-end; background: #DCF8C6; color: #111;
-      border-radius: 8px 8px 0 8px;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      align-self: flex-end; background: ${primaryColor}; color: white;
+      border-radius: 16px 16px 4px 16px;
     }
     .ma-msg.bot {
-      align-self: flex-start; background: #FFFFFF; color: #111;
-      border-radius: 8px 8px 8px 0;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      align-self: flex-start; background: rgba(255,255,255,0.08); color: #e5e5e5;
+      border-radius: 16px 16px 16px 4px;
     }
-    .ma-msg .ma-time {
-      font-size: 11px; margin-top: 2px; text-align: right; color: #667781;
-      display: flex; align-items: center; justify-content: flex-end; gap: 3px;
+    .ma-msg.typing {
+      align-self: flex-start; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5);
+      border-radius: 16px 16px 16px 4px; font-style: italic;
     }
-    .ma-msg.user .ma-time { color: #667781; }
-    .ma-msg.typing { color: #667781; font-style: italic; background: #ffffff; }
 
     .ma-input-area {
-      padding: 8px 10px; background: #F0F2F5;
+      padding: 12px 16px; background: #0f0d1a;
       display: flex; gap: 8px; align-items: center;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0;
     }
     .ma-input {
-      flex: 1; padding: 10px 16px; border-radius: 21px;
-      background: #ffffff; border: none;
-      color: #111; font-size: 15px; outline: none;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      flex: 1; padding: 10px 14px; border-radius: 10px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+      color: #ffffff; font-size: 14px; outline: none;
+      transition: border-color 0.2s;
     }
-    .ma-input::placeholder { color: #8696a0; }
-    .ma-input:focus { box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .ma-input::placeholder { color: rgba(255,255,255,0.35); }
+    .ma-input:focus { border-color: ${primaryColor}; }
     .ma-send {
-      width: 40px; height: 40px; border-radius: 50%; background: #25D366;
+      width: 38px; height: 38px; border-radius: 10px; background: ${primaryColor};
       color: white; border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: opacity 0.2s, transform 0.1s;
       flex-shrink: 0;
     }
     .ma-send:hover { transform: scale(1.05); }
-    .ma-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .ma-send:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 
     .ma-powered {
-      text-align: center; padding: 4px; font-size: 10px; color: #8696a0;
-      background: #F0F2F5;
+      text-align: center; padding: 6px; font-size: 11px; color: rgba(255,255,255,0.3);
+      background: #0f0d1a; flex-shrink: 0;
     }
-    .ma-powered a { color: #8696a0; text-decoration: none; }
-    .ma-powered a:hover { color: #667781; text-decoration: underline; }
+    .ma-powered a { color: rgba(255,255,255,0.3); text-decoration: none; transition: color 0.2s; }
+    .ma-powered a:hover { color: rgba(255,255,255,0.5); }
 
     @media (max-width: 480px) {
       .ma-chat { width: calc(100vw - 16px); ${position}: 8px; bottom: 80px; height: calc(100vh - 96px); border-radius: 12px; }
-      .ma-fab { bottom: 16px; ${position}: 16px; width: 54px; height: 54px; }
+      .ma-fab { bottom: 16px; ${position}: 16px; width: 52px; height: 52px; }
     }
   `
   document.head.appendChild(style)
 
-  // Build widget HTML — clean WhatsApp-style
+  // Build widget HTML
   const container = document.createElement('div')
   container.id = WIDGET_ID
   container.innerHTML = `
@@ -170,15 +174,19 @@
     </button>
     <div class="ma-chat" role="dialog" aria-label="Chat assistant">
       <div class="ma-header">
-        <div class="ma-avatar">${botName.charAt(0).toUpperCase()}</div>
-        <div class="ma-header-info">
-          <div class="ma-header-title">${botName}</div>
-          <div class="ma-header-status">● Online</div>
+        <div class="ma-header-left">
+          <div>
+            <div class="ma-header-title">${botName}</div>
+            <div class="ma-header-status">
+              <span class="ma-header-dot"></span>
+              <span class="ma-header-status-text">Online</span>
+            </div>
+          </div>
         </div>
         <button class="ma-close" aria-label="Close chat">&times;</button>
       </div>
       <div class="ma-messages">
-        <div class="ma-msg bot">${greeting}<div class="ma-time">now</div></div>
+        <div class="ma-msg bot">${greeting}</div>
       </div>
       <div class="ma-input-area">
         <input class="ma-input" type="text" placeholder="Type a message..." aria-label="Chat message" />
@@ -205,7 +213,7 @@
     isOpen = !isOpen
     chat.classList.toggle('open', isOpen)
     fab.innerHTML = isOpen
-      ? '<span style="font-size:18px;line-height:1;">✕</span>'
+      ? '<span style="font-size:16px;line-height:1;">✕</span>'
       : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
     if (isOpen) input.focus()
   })
@@ -226,22 +234,11 @@
 
   sendBtn.addEventListener('click', sendMessage)
 
-  function getTimeStr() {
-    const now = new Date()
-    return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0')
-  }
-
   function addMessage(text, role) {
     const div = document.createElement('div')
     div.className = `ma-msg ${role}`
     const textNode = document.createTextNode(text)
     div.appendChild(textNode)
-    if (!role.includes('typing')) {
-      const time = document.createElement('div')
-      time.className = 'ma-time'
-      time.textContent = getTimeStr()
-      div.appendChild(time)
-    }
     messages.appendChild(div)
     messages.scrollTop = messages.scrollHeight
     return div
@@ -255,7 +252,7 @@
     input.value = ''
     sendBtn.disabled = true
 
-    const typingEl = addMessage('Thinking...', 'bot typing')
+    const typingEl = addMessage('Typing...', 'typing')
 
     try {
       const res = await fetch(`${baseUrl}/api/chat`, {
