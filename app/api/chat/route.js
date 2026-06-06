@@ -2,6 +2,7 @@ import Groq from 'groq-sdk'
 import { rateLimit } from '@/lib/rate-limit'
 import { sanitizeInput } from '@/lib/validation'
 import { GROQ_MODEL, MAX_MESSAGE_LENGTH, MAX_CONTEXT_LENGTH } from '@/lib/constants'
+import { logQuestion } from '@/lib/question-store'
 
 // CORS headers for cross-origin widget embeds
 const corsHeaders = {
@@ -61,7 +62,34 @@ export async function POST(request) {
 
     const reply = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.'
 
-    return Response.json({ reply }, { headers: corsHeaders })
+    // Detect if the bot couldn't answer (unanswered)
+    const unansweredPhrases = [
+      "I don't have that information",
+      "contact the business directly",
+      "I'm not sure about that",
+      "I don't have enough information",
+      "I cannot find",
+      "not in the business information",
+    ]
+    const isUnanswered = unansweredPhrases.some((phrase) =>
+      reply.toLowerCase().includes(phrase.toLowerCase())
+    )
+
+    // Log the question asynchronously (don't block the response)
+    const agentId = body.agentId || 'demo'
+    const businessEmail = body.businessEmail || null
+    const businessName = body.businessName || null
+    logQuestion({
+      question: message,
+      answer: reply,
+      unanswered: isUnanswered,
+      agentId,
+      businessEmail,
+      businessName,
+      ip,
+    })
+
+    return Response.json({ reply, unanswered: isUnanswered }, { headers: corsHeaders })
   } catch (error) {
     console.error('Chat API error:', error.message)
 

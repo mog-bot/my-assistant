@@ -15,6 +15,7 @@
   const greeting = script?.getAttribute('data-greeting') || 'Hi! How can I help you today?'
   const botName = script?.getAttribute('data-name') || 'AI Assistant'
   const extraContext = script?.getAttribute('data-extra-context') || ''
+  const businessEmail = script?.getAttribute('data-business-email') || ''
 
   // Determine API base URL from script src
   const scriptSrc = script?.src || ''
@@ -261,7 +262,9 @@
         body: JSON.stringify({
           message: text,
           agentId: agentId,
-          context: PAGE_CONTEXT
+          context: PAGE_CONTEXT,
+          businessEmail: businessEmail,
+          businessName: botName
         }),
       })
 

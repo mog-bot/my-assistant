@@ -17,6 +17,7 @@ export default function CreateAgent() {
   const [step, setStep] = useState(1)
   const [websiteUrl, setWebsiteUrl] = useState('')
   const [businessName, setBusinessName] = useState('')
+  const [businessEmail, setBusinessEmail] = useState('')
   const [extraInfo, setExtraInfo] = useState('')
   const [greeting, setGreeting] = useState('Hi! How can I help you today?')
   const [selectedColor, setSelectedColor] = useState(COLOR_PRESETS[0])
@@ -55,7 +56,7 @@ export default function CreateAgent() {
 
   const activeColor = customColor || selectedColor.primary
 
-  const embedCode = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-color="${activeColor}" data-name="${businessName || 'AI Assistant'}" data-greeting="${greeting}"${extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : ''}></script>`
+  const embedCode = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-color="${activeColor}" data-name="${businessName || 'AI Assistant'}" data-greeting="${greeting}" data-business-email="${businessEmail}"${extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : ''}></script>`
 
   const previewMessages = [
     { role: 'bot', text: greeting },
@@ -202,6 +203,20 @@ export default function CreateAgent() {
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none mb-6"
                 />
 
+                {/* Business email for reports */}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your email <span className="text-gray-400 font-normal">(for daily reports)</span>
+                </label>
+                <p className="text-sm text-gray-500 mb-2">We'll send you a daily summary of questions your agent couldn't answer so you can improve it.</p>
+                <input
+                  type="email"
+                  value={businessEmail}
+                  onChange={(e) => setBusinessEmail(e.target.value)}
+                  placeholder="you@yourbusiness.com"
+                  required
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-6"
+                />
+
                 <div className="flex gap-3">
                   <button
                     onClick={() => setStep(1)}
@@ -211,7 +226,8 @@ export default function CreateAgent() {
                   </button>
                   <button
                     onClick={() => setStep(3)}
-                    className="px-6 py-3 text-white rounded-lg font-semibold transition-colors"
+                    disabled={!businessEmail.trim()}
+                    className="px-6 py-3 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
                     style={{ backgroundColor: activeColor }}
                   >
                     Get My Code
