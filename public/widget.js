@@ -105,7 +105,7 @@
 
     .ma-msg {
       max-width: 85%; padding: 6px 8px 4px 8px; font-size: 14px; line-height: 1.4;
-      word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap;
+      word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap;
       position: relative;
     }
     .ma-msg.user {
