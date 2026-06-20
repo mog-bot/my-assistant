@@ -1,8 +1,18 @@
-// In-memory signup store for demo/draft
-// In production, replace with a database (Supabase, Planetscale, etc.)
-const signups = []
+import { supabase } from '@/lib/supabase'
+import { rateLimit } from '@/lib/rate-limit'
+import { sendWelcomeEmail } from '@/lib/email'
 
 export async function POST(request) {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const { allowed } = rateLimit(`signup:${ip}`, 5, 60000)
+
+  if (!allowed) {
+    return Response.json(
+      { error: 'Too many requests. Please wait a moment.' },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
   try {
     const { email } = await request.json()
 
@@ -18,17 +28,31 @@ export async function POST(request) {
 
     const normalized = email.toLowerCase().trim()
 
-    // Check for duplicate (in-memory only — resets on redeploy)
-    if (signups.some((s) => s.email === normalized)) {
+    // Check for duplicate
+    const { data: existing } = await supabase
+      .from('signups')
+      .select('id')
+      .eq('email', normalized)
+      .maybeSingle()
+
+    if (existing) {
       return Response.json({ message: 'Already signed up' })
     }
 
-    signups.push({
-      email: normalized,
-      signedUpAt: new Date().toISOString(),
-    })
+    // Insert new signup
+    const { error } = await supabase
+      .from('signups')
+      .insert({ email: normalized })
 
-    console.log(`New signup: ${normalized} (total: ${signups.length})`)
+    if (error) {
+      console.error('Supabase signup error:', error.message)
+      return Response.json({ error: 'Failed to sign up' }, { status: 500 })
+    }
+
+    // Send welcome email (don't block response if it fails)
+    sendWelcomeEmail(normalized).catch((err) => {
+      console.error('Welcome email failed:', err.message)
+    })
 
     return Response.json({ message: 'Signed up successfully' })
   } catch (error) {

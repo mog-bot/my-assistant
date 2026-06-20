@@ -46,7 +46,7 @@ export function PricingCard({ tier, price, priceSuffix, features, highlighted })
       <button
         className={`w-full mt-8 py-3 rounded-lg font-semibold transition-all duration-200 ${
           highlighted
-            ? 'bg-white text-purple-600 hover:bg-gray-100 shadow-lg'
+            ? `bg-white ${t.accent} hover:bg-gray-100 shadow-lg`
             : `${t.accentBg} text-white ${t.accentHover} shadow-md ${t.glow}`
         }`}
       >
