@@ -87,7 +87,7 @@ export default function CreateAgent() {
     return (0.299 * r + 0.587 * g + 0.114 * b) > 150
   })()
 
-  const embedCode = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-color="${activeColor}" data-bg="${activeBg}" data-font="${activeFont}" data-name="${businessName || 'AI Assistant'}" data-greeting="${greeting}" data-business-email="${businessEmail}"${extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : ''}></script>`
+  const embedCode = `<script src="https://my-assistant-ashy.vercel.app/widget.js" data-color="${activeColor}" data-bg="${activeBg}" data-font="${activeFont}" data-name="${businessName || 'AI Assistant'}" data-greeting="${greeting}" data-business-email="${businessEmail}"${extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : ''}></script>`
 
   const previewMessages = [
     { role: 'bot', text: greeting },
