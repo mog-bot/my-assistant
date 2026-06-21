@@ -13,6 +13,23 @@ const COLOR_PRESETS = [
   { name: 'Black', primary: '#1f2937', bubble: '#1f2937' },
 ]
 
+const BG_PRESETS = [
+  { name: 'Light', value: '#f9fafb' },
+  { name: 'White', value: '#ffffff' },
+  { name: 'Cream', value: '#faf7f0' },
+  { name: 'Slate', value: '#1e293b' },
+  { name: 'Dark', value: '#0f0d1a' },
+]
+
+const FONT_PRESETS = [
+  { name: 'System', value: 'system', css: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
+  { name: 'Inter', value: 'inter', css: '"Inter", sans-serif' },
+  { name: 'Poppins', value: 'poppins', css: '"Poppins", sans-serif' },
+  { name: 'Rounded', value: 'rounded', css: '"Nunito", sans-serif' },
+  { name: 'Serif', value: 'serif', css: 'Georgia, serif' },
+  { name: 'Mono', value: 'mono', css: '"SF Mono", Menlo, monospace' },
+]
+
 export default function CreateAgent() {
   const [step, setStep] = useState(1)
   const [websiteUrl, setWebsiteUrl] = useState('')
@@ -22,6 +39,9 @@ export default function CreateAgent() {
   const [greeting, setGreeting] = useState('Hi! How can I help you today?')
   const [selectedColor, setSelectedColor] = useState(COLOR_PRESETS[0])
   const [customColor, setCustomColor] = useState('')
+  const [selectedBg, setSelectedBg] = useState(BG_PRESETS[0])
+  const [customBg, setCustomBg] = useState('')
+  const [selectedFont, setSelectedFont] = useState(FONT_PRESETS[0])
   const [scrapeStatus, setScrapeStatus] = useState('idle')
   const [scrapeData, setScrapeData] = useState(null)
   const [error, setError] = useState('')
@@ -55,8 +75,19 @@ export default function CreateAgent() {
   }, [websiteUrl])
 
   const activeColor = customColor || selectedColor.primary
+  const activeBg = customBg || selectedBg.value
+  const activeFont = selectedFont.value
+  const activeFontCss = selectedFont.css
 
-  const embedCode = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-color="${activeColor}" data-name="${businessName || 'AI Assistant'}" data-greeting="${greeting}" data-business-email="${businessEmail}"${extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : ''}></script>`
+  // Is the chosen background light or dark? (drives preview bubble/text colours)
+  const bgIsLight = (() => {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(activeBg)
+    if (!m) return true
+    const r = parseInt(m[1], 16), g = parseInt(m[2], 16), b = parseInt(m[3], 16)
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150
+  })()
+
+  const embedCode = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-color="${activeColor}" data-bg="${activeBg}" data-font="${activeFont}" data-name="${businessName || 'AI Assistant'}" data-greeting="${greeting}" data-business-email="${businessEmail}"${extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : ''}></script>`
 
   const previewMessages = [
     { role: 'bot', text: greeting },
@@ -190,6 +221,52 @@ export default function CreateAgent() {
                   <span className="text-sm text-gray-500 font-mono">{customColor || selectedColor.primary}</span>
                 </div>
 
+                {/* Background colour picker */}
+                <label className="block text-sm font-medium text-gray-700 mb-3">Background colour</label>
+                <div className="flex flex-wrap gap-3 mb-3">
+                  {BG_PRESETS.map((bg) => (
+                    <button
+                      key={bg.name}
+                      onClick={() => { setSelectedBg(bg); setCustomBg('') }}
+                      className={`w-10 h-10 rounded-full border-2 transition-transform hover:scale-110 ${
+                        selectedBg.name === bg.name && !customBg ? 'border-gray-900 scale-110' : 'border-gray-200'
+                      }`}
+                      style={{ backgroundColor: bg.value }}
+                      title={bg.name}
+                      aria-label={`Select ${bg.name} background`}
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 mb-6">
+                  <label className="text-sm text-gray-500">Custom:</label>
+                  <input
+                    type="color"
+                    value={customBg || selectedBg.value}
+                    onChange={(e) => setCustomBg(e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer border border-gray-300"
+                  />
+                  <span className="text-sm text-gray-500 font-mono">{customBg || selectedBg.value}</span>
+                </div>
+
+                {/* Font picker */}
+                <label className="block text-sm font-medium text-gray-700 mb-3">Font</label>
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {FONT_PRESETS.map((font) => (
+                    <button
+                      key={font.value}
+                      onClick={() => setSelectedFont(font)}
+                      className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
+                        selectedFont.value === font.value
+                          ? 'border-gray-900 bg-gray-900 text-white'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                      }`}
+                      style={{ fontFamily: font.css }}
+                    >
+                      {font.name}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Extra info */}
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Extra information <span className="text-gray-400 font-normal">(optional)</span>
@@ -292,7 +369,7 @@ export default function CreateAgent() {
           {/* Right: Live Preview */}
           <div className="hidden lg:block">
             <p className="text-sm font-medium text-gray-500 mb-4">Live Preview</p>
-            <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white" style={{ height: '520px' }}>
+            <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white" style={{ height: '520px', fontFamily: activeFontCss }}>
               {/* Chat header */}
               <div className="px-5 py-4 flex items-center gap-3" style={{ backgroundColor: activeColor }}>
                 <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm">
@@ -308,10 +385,10 @@ export default function CreateAgent() {
               </div>
 
               {/* Messages area */}
-              <div className="p-4 flex flex-col gap-3 flex-1 overflow-y-auto bg-gray-50" style={{ height: '380px' }}>
+              <div className="p-4 flex flex-col gap-3 flex-1 overflow-y-auto" style={{ height: '380px', backgroundColor: activeBg }}>
                 {/* Date divider */}
                 <div className="text-center">
-                  <span className="text-xs text-gray-400 bg-white px-3 py-1 rounded-full shadow-sm">Today</span>
+                  <span className="text-xs px-3 py-1 rounded-full shadow-sm" style={{ color: bgIsLight ? '#9ca3af' : 'rgba(255,255,255,0.6)', backgroundColor: bgIsLight ? '#ffffff' : 'rgba(255,255,255,0.08)' }}>Today</span>
                 </div>
 
                 {previewMessages.map((msg, i) => (
@@ -320,12 +397,14 @@ export default function CreateAgent() {
                       className={`max-w-[75%] px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
                         msg.role === 'user'
                           ? 'rounded-[18px] rounded-br-[4px] text-white'
-                          : 'rounded-[18px] rounded-bl-[4px] bg-white text-gray-800 border border-gray-100'
+                          : 'rounded-[18px] rounded-bl-[4px]'
                       }`}
-                      style={msg.role === 'user' ? { backgroundColor: activeColor } : {}}
+                      style={msg.role === 'user'
+                        ? { backgroundColor: activeColor }
+                        : { backgroundColor: bgIsLight ? '#ffffff' : 'rgba(255,255,255,0.10)', color: bgIsLight ? '#1f2937' : '#e5e7eb', border: bgIsLight ? '1px solid #f0f0f0' : 'none' }}
                     >
                       {msg.text}
-                      <div className={`text-[10px] mt-1 text-right ${msg.role === 'user' ? 'text-white/60' : 'text-gray-400'}`}>
+                      <div className="text-[10px] mt-1 text-right" style={{ color: msg.role === 'user' ? 'rgba(255,255,255,0.6)' : (bgIsLight ? '#9ca3af' : 'rgba(255,255,255,0.45)') }}>
                         {i === 0 ? '12:00' : i === 1 ? '12:01' : '12:01'}
                       </div>
                     </div>
@@ -334,8 +413,8 @@ export default function CreateAgent() {
               </div>
 
               {/* Input area */}
-              <div className="px-4 py-3 border-t border-gray-200 bg-white flex items-center gap-2">
-                <div className="flex-1 px-4 py-2.5 bg-gray-100 rounded-full text-sm text-gray-400">
+              <div className="px-4 py-3 border-t flex items-center gap-2" style={{ backgroundColor: bgIsLight ? '#ffffff' : activeBg, borderColor: bgIsLight ? '#e5e7eb' : 'rgba(255,255,255,0.08)' }}>
+                <div className="flex-1 px-4 py-2.5 rounded-full text-sm" style={{ backgroundColor: bgIsLight ? '#f3f4f6' : 'rgba(255,255,255,0.10)', color: bgIsLight ? '#9ca3af' : 'rgba(255,255,255,0.4)' }}>
                   Type a message...
                 </div>
                 <div
