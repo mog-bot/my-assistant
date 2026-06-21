@@ -394,7 +394,7 @@ export default function CreateAgent() {
                 {previewMessages.map((msg, i) => (
                   <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div
-                      className={`max-w-[80%] min-w-0 px-[13px] py-[9px] shadow-sm ${
+                      className={`max-w-[80%] min-w-0 px-[15px] py-[11px] shadow-sm ${
                         msg.role === 'user'
                           ? 'rounded-[18px] rounded-br-[4px] text-white'
                           : 'rounded-[18px] rounded-bl-[4px]'
@@ -403,8 +403,8 @@ export default function CreateAgent() {
                         ? { backgroundColor: activeColor }
                         : { backgroundColor: bgIsLight ? '#ffffff' : 'rgba(255,255,255,0.10)', color: bgIsLight ? '#1f2937' : '#e5e7eb', border: bgIsLight ? '1px solid #f0f0f0' : 'none' }}
                     >
-                      <span className="block text-[13.5px] leading-[1.45]" style={{ overflowWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{msg.text}</span>
-                      <span className="block text-[10px] mt-[3px] text-right" style={{ color: msg.role === 'user' ? 'rgba(255,255,255,0.6)' : (bgIsLight ? '#9ca3af' : 'rgba(255,255,255,0.45)') }}>
+                      <span className="block text-[14px] leading-[1.5]" style={{ overflowWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{msg.text}</span>
+                      <span className="block text-[10.5px] mt-[4px] text-right" style={{ color: msg.role === 'user' ? 'rgba(255,255,255,0.6)' : (bgIsLight ? '#9ca3af' : 'rgba(255,255,255,0.45)') }}>
                         {i === 0 ? '12:00' : i === 1 ? '12:01' : '12:01'}
                       </span>
                     </div>
