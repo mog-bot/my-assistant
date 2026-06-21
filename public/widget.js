@@ -129,11 +129,11 @@
     '.ma-chat.open{display:flex;}' +
     '@keyframes ma-slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}' +
 
-    '.ma-header{padding:16px 18px;background:' + primaryColor + ';display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}' +
+    '.ma-header{padding:16px 20px;background:' + primaryColor + ';display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}' +
     '.ma-header-left{display:flex;align-items:center;gap:12px;}' +
-    '.ma-header-avatar{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:17px;flex-shrink:0;}' +
+    '.ma-header-avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;}' +
     '.ma-header-info{display:flex;flex-direction:column;}' +
-    '.ma-header-title{color:#fff;font-weight:700;font-size:15px;}' +
+    '.ma-header-title{color:#fff;font-weight:600;font-size:14px;}' +
     '.ma-header-status{display:flex;align-items:center;gap:6px;margin-top:1px;}' +
     '.ma-header-dot{width:8px;height:8px;border-radius:50%;background:#86efac;}' +
     '.ma-header-status-text{color:rgba(255,255,255,0.85);font-size:12px;}' +
@@ -152,7 +152,7 @@
     '.ma-row.user{justify-content:flex-end;}' +
     '.ma-row.bot{justify-content:flex-start;}' +
 
-    '.ma-msg{max-width:80%;min-width:0;padding:11px 15px;font-size:14px;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,0.1);}' +
+    '.ma-msg{max-width:80%;min-width:0;padding:11px 15px;font-size:14px;line-height:1.5;box-shadow:0 1px 2px rgba(0,0,0,0.05);}' +
     '.ma-msg.user{background:' + primaryColor + ';color:#fff;border-radius:18px 18px 4px 18px;}' +
     '.ma-msg.bot{background:' + botBubbleBg + ';color:' + botTextColor + ';border:' + botBubbleBorder + ';border-radius:18px 18px 18px 4px;}' +
     '.ma-text{display:block;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;word-wrap:break-word;}' +
@@ -167,22 +167,18 @@
     '.ma-typing-dots span:nth-child(3){animation-delay:.32s;}' +
     '@keyframes ma-bounce{0%,80%,100%{transform:scale(.6);opacity:.4;}40%{transform:scale(1);opacity:1;}}' +
 
-    '.ma-suggestions{padding:4px 16px 8px;display:flex;flex-wrap:wrap;gap:7px;background:' + bgColor + ';flex-shrink:0;}' +
-    '.ma-suggestion{font-size:12.5px;padding:7px 13px;border-radius:999px;background:rgba(' + colorRgb + ',0.08);border:1px solid rgba(' + colorRgb + ',0.4);color:' + primaryColor + ';cursor:pointer;font-weight:500;transition:background .15s,color .15s;}' +
-    '.ma-suggestion:hover{background:' + primaryColor + ';color:#fff;border-color:' + primaryColor + ';}' +
+    '.ma-suggestions{display:none;}' +
 
-    '.ma-input-area{padding:12px 14px;background:' + inputBarBg + ';display:flex;gap:10px;align-items:center;border-top:1px solid ' + topBorder + ';flex-shrink:0;}' +
-    '.ma-input{flex:1;padding:11px 16px;border-radius:999px;background:' + inputPillBg + ';border:1px solid transparent;color:' + inputText + ';font-size:14px;outline:none;transition:border-color .2s;}' +
+    '.ma-input-area{padding:12px 16px;background:' + inputBarBg + ';display:flex;gap:8px;align-items:center;border-top:1px solid ' + topBorder + ';flex-shrink:0;}' +
+    '.ma-input{flex:1;padding:10px 16px;border-radius:999px;background:' + inputPillBg + ';border:1px solid transparent;color:' + inputText + ';font-size:14px;outline:none;transition:border-color .2s;}' +
     '.ma-input::placeholder{color:' + placeholderColor + ';}' +
     '.ma-input:focus{border-color:' + primaryColor + ';}' +
-    '.ma-send{width:40px;height:40px;border-radius:50%;background:' + primaryColor + ';color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,transform .1s;flex-shrink:0;}' +
+    '.ma-send{width:36px;height:36px;border-radius:50%;background:' + primaryColor + ';color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,transform .1s;flex-shrink:0;}' +
     '.ma-send:hover{transform:scale(1.06);}' +
     '.ma-send:disabled{opacity:.35;cursor:not-allowed;transform:none;}' +
     '.ma-send svg{width:16px;height:16px;}' +
 
-    '.ma-powered{text-align:center;padding:7px;font-size:11px;color:' + poweredColor + ';background:' + inputBarBg + ';flex-shrink:0;}' +
-    '.ma-powered a{color:' + poweredColor + ';text-decoration:none;}' +
-    '.ma-powered a:hover{opacity:.7;}' +
+    '.ma-powered{display:none;}' +
 
     '@media (max-width:480px){.ma-chat{width:calc(100vw - 16px);' + position + ':8px;bottom:96px;height:calc(100vh - 112px);max-height:calc(100vh - 112px);}.ma-fab{bottom:20px;' + position + ':16px;width:54px;height:54px;}.ma-fab svg{width:22px;height:22px;}.ma-msg{max-width:82%;}}'
   document.head.appendChild(style)
@@ -207,12 +203,10 @@
       '<div class="ma-messages">' +
         '<div class="ma-divider"><span>Today</span></div>' +
       '</div>' +
-      '<div class="ma-suggestions"></div>' +
       '<div class="ma-input-area">' +
         '<input class="ma-input" type="text" placeholder="Type a message..." aria-label="Chat message" />' +
         '<button class="ma-send" disabled aria-label="Send"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>' +
       '</div>' +
-      '<div class="ma-powered"><a href="https://my-assistant-bhre.vercel.app" target="_blank" rel="noopener">Powered by My Assistant</a></div>' +
     '</div>'
   document.body.appendChild(container)
 
@@ -220,7 +214,6 @@
   var chat = container.querySelector('.ma-chat')
   var closeBtn = container.querySelector('.ma-close')
   var messages = container.querySelector('.ma-messages')
-  var suggestionsArea = container.querySelector('.ma-suggestions')
   var input = container.querySelector('.ma-input')
   var sendBtn = container.querySelector('.ma-send')
 
@@ -256,21 +249,6 @@
   // Greeting message
   addMessage(greeting, 'bot')
 
-  // Suggestions
-  var defaultSuggestions = ['What do you do?', 'How can you help me?', 'Tell me more']
-  function showSuggestions(list) {
-    suggestionsArea.innerHTML = ''
-    list.forEach(function (text) {
-      var btn = document.createElement('button')
-      btn.className = 'ma-suggestion'
-      btn.textContent = text
-      btn.addEventListener('click', function () { input.value = text; sendMessage() })
-      suggestionsArea.appendChild(btn)
-    })
-  }
-  function hideSuggestions() { suggestionsArea.innerHTML = '' }
-  showSuggestions(defaultSuggestions)
-
   fab.addEventListener('click', function () {
     isOpen = !isOpen
     chat.classList.toggle('open', isOpen)
@@ -293,7 +271,6 @@
     input.value = ''
     sendBtn.disabled = true
     messageCount++
-    if (messageCount === 1) hideSuggestions()
 
     var typingEl = addMessage('', 'typing')
 
