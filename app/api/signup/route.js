@@ -28,6 +28,15 @@ export async function POST(request) {
 
     const normalized = email.toLowerCase().trim()
 
+    // If Supabase isn't configured, accept the signup gracefully (no DB write)
+    if (!supabase) {
+      console.warn('Supabase not configured — signup accepted without storage')
+      sendWelcomeEmail(normalized).catch((err) => {
+        console.error('Welcome email failed:', err.message)
+      })
+      return Response.json({ message: 'Signed up successfully' })
+    }
+
     // Check for duplicate
     const { data: existing } = await supabase
       .from('signups')
