@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Widget Design Samples — My Assistant</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #eef0f3; color: #1f2937; padding: 32px 16px; }
+  h1 { text-align: center; font-size: 26px; margin-bottom: 6px; }
+  .sub { text-align: center; color: #6b7280; margin-bottom: 32px; font-size: 14px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; max-width: 1400px; margin: 0 auto; }
+  .sample { width: 340px; }
+  .sample h2 { font-size: 15px; margin-bottom: 4px; }
+  .sample p.desc { font-size: 12.5px; color: #6b7280; margin-bottom: 12px; line-height: 1.4; }
+
+  /* ===== shared chat frame ===== */
+  .chat { border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; height: 440px; }
+  .hdr { padding: 16px 18px; display: flex; align-items: center; gap: 12px; }
+  .av { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color:#fff; font-weight: 600; flex-shrink: 0; }
+  .hdr .nm { color: #fff; font-weight: 600; font-size: 14px; }
+  .hdr .st { color: rgba(255,255,255,.78); font-size: 11.5px; display:flex; align-items:center; gap:5px; margin-top:2px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background:#4ade80; }
+  .msgs { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 11px; overflow:hidden; }
+  .row { display: flex; width:100%; }
+  .row.u { justify-content: flex-end; }
+  .b { max-width: 80%; padding: 10px 14px; font-size: 13.5px; line-height: 1.45; }
+  .day { text-align:center; font-size:11px; color:#9ca3af; margin-bottom:2px; }
+  .inp { padding: 12px 14px; display:flex; gap:8px; align-items:center; }
+  .pill { flex:1; padding:10px 15px; border-radius:999px; font-size:13px; }
+  .snd { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; }
+  .snd svg { width:15px; height:15px; }
+
+  /* ===== STYLE 1: Current (rounded, light) ===== */
+  .s1 .chat { background:#f9fafb; box-shadow:0 12px 40px rgba(0,0,0,.12); }
+  .s1 .hdr { background:#16a34a; }
+  .s1 .av { background:rgba(255,255,255,.2); }
+  .s1 .b.bot { background:#fff; color:#1f2937; border:1px solid #f0f0f0; border-radius:18px 18px 18px 4px; box-shadow:0 1px 2px rgba(0,0,0,.05); }
+  .s1 .b.u { background:#16a34a; color:#fff; border-radius:18px 18px 4px 18px; }
+  .s1 .inp { background:#fff; border-top:1px solid #e5e7eb; }
+  .s1 .pill { background:#f3f4f6; color:#9ca3af; }
+  .s1 .snd { background:#16a34a; }
+
+  /* ===== STYLE 2: Jony Ive — minimal, frosted, airy ===== */
+  .s2 .chat { background:#fbfbfd; box-shadow:0 24px 64px rgba(0,0,0,.14); border:.5px solid rgba(0,0,0,.06); border-radius:24px; }
+  .s2 .hdr { background:#1d1d1f; padding:18px 20px; }
+  .s2 .av { background:rgba(255,255,255,.16); box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25); font-weight:500; }
+  .s2 .msgs { padding:20px 18px; gap:14px; }
+  .s2 .b { letter-spacing:-.01em; padding:11px 16px; }
+  .s2 .b.bot { background:#fff; color:#1d1d1f; border-radius:20px 20px 20px 6px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .s2 .b.u { background:#1d1d1f; color:#fff; border-radius:20px 20px 6px 20px; }
+  .s2 .inp { background:#fbfbfd; border-top:.5px solid rgba(0,0,0,.06); padding:14px 16px 16px; }
+  .s2 .pill { background:#f0f0f3; color:#86868b; }
+  .s2 .snd { background:#1d1d1f; }
+
+  /* ===== STYLE 3: Soft pastel / friendly ===== */
+  .s3 .chat { background:#fdf4ff; box-shadow:0 16px 48px rgba(168,85,247,.18); border-radius:26px; }
+  .s3 .hdr { background:linear-gradient(135deg,#a855f7,#ec4899); border-radius:0; }
+  .s3 .av { background:rgba(255,255,255,.25); }
+  .s3 .b { border-radius:22px; }
+  .s3 .b.bot { background:#fff; color:#581c87; box-shadow:0 2px 8px rgba(168,85,247,.1); border-radius:22px 22px 22px 6px; }
+  .s3 .b.u { background:linear-gradient(135deg,#a855f7,#ec4899); color:#fff; border-radius:22px 22px 6px 22px; }
+  .s3 .inp { background:#fff; }
+  .s3 .pill { background:#faf5ff; color:#a78bca; }
+  .s3 .snd { background:linear-gradient(135deg,#a855f7,#ec4899); }
+
+  /* ===== STYLE 4: Dark / premium ===== */
+  .s4 .chat { background:#0f0d1a; box-shadow:0 20px 60px rgba(0,0,0,.4); border-radius:22px; border:1px solid rgba(255,255,255,.06); }
+  .s4 .hdr { background:rgba(255,255,255,.03); border-bottom:1px solid rgba(255,255,255,.06); }
+  .s4 .av { background:#7c3aed; }
+  .s4 .nm { color:#fff; } 
+  .s4 .b.bot { background:rgba(255,255,255,.07); color:#e5e7eb; border-radius:18px 18px 18px 4px; }
+  .s4 .b.u { background:#7c3aed; color:#fff; border-radius:18px 18px 4px 18px; }
+  .s4 .day { color:rgba(255,255,255,.4); }
+  .s4 .inp { background:transparent; border-top:1px solid rgba(255,255,255,.06); }
+  .s4 .pill { background:rgba(255,255,255,.07); color:rgba(255,255,255,.4); }
+  .s4 .snd { background:#7c3aed; }
+
+  /* ===== STYLE 5: Crisp / corporate (sharp small radius) ===== */
+  .s5 .chat { background:#f8fafc; box-shadow:0 10px 36px rgba(15,23,42,.12); border-radius:12px; border:1px solid #e2e8f0; }
+  .s5 .hdr { background:#0f172a; border-radius:0; }
+  .s5 .av { background:#3b82f6; border-radius:8px; }
+  .s5 .b { border-radius:8px; }
+  .s5 .b.bot { background:#fff; color:#0f172a; border:1px solid #e2e8f0; border-radius:4px 12px 12px 12px; }
+  .s5 .b.u { background:#2563eb; color:#fff; border-radius:12px 4px 12px 12px; }
+  .s5 .inp { background:#fff; border-top:1px solid #e2e8f0; }
+  .s5 .pill { background:#f1f5f9; color:#94a3b8; border-radius:8px; }
+  .s5 .snd { background:#2563eb; border-radius:8px; }
+
+  /* ===== STYLE 6: Warm / organic (great for plant shop) ===== */
+  .s6 .chat { background:#faf7f0; box-shadow:0 16px 44px rgba(120,90,40,.16); border-radius:22px; }
+  .s6 .hdr { background:#3f6212; }
+  .s6 .av { background:rgba(255,255,255,.2); }
+  .s6 .b.bot { background:#fff; color:#3f3a2f; border:1px solid #efe9dc; border-radius:18px 18px 18px 5px; box-shadow:0 1px 3px rgba(120,90,40,.08); }
+  .s6 .b.u { background:#65a30d; color:#fff; border-radius:18px 18px 5px 18px; }
+  .s6 .inp { background:#fff; border-top:1px solid #efe9dc; }
+  .s6 .pill { background:#f5f1e8; color:#a8a190; }
+  .s6 .snd { background:#65a30d; }
+</style>
+</head>
+<body>
+  <h1>Widget Design Samples</h1>
+  <p class="sub">6 styles — all keep your color / background / font / name / greeting options. Pick a number and I'll build it.</p>
+  <div class="grid" id="grid"></div>
+
+<script>
+  var SEND = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
+  var styles = [
+    { cls:'s1', name:'1 · Current (Rounded Light)', desc:'What you have now. Clean, friendly, white bubbles.' },
+    { cls:'s2', name:'2 · Jony Ive (Minimal)', desc:'Apple-style. Off-white, charcoal accent, airy spacing, frosted, soft shadows.' },
+    { cls:'s3', name:'3 · Soft Pastel (Playful)', desc:'Gradient header, rounded, warm. Friendly & approachable.' },
+    { cls:'s4', name:'4 · Dark Premium', desc:'Sleek dark mode. Feels high-end / techy.' },
+    { cls:'s5', name:'5 · Crisp Corporate', desc:'Sharper corners, structured. Professional / B2B.' },
+    { cls:'s6', name:'6 · Warm Organic', desc:'Earthy greens & cream. Perfect for a plant shop or wellness brand.' }
+  ];
+  var convo = [
+    { r:'bot', t:'Hi! How can I help you today?' },
+    { r:'u', t:'Do you sell indoor plants?' },
+    { r:'bot', t:'Yes! We have a wide range of indoor plants, from easy-care succulents to statement monsteras.' }
+  ];
+  var grid = document.getElementById('grid');
+  styles.forEach(function(s){
+    var msgs = convo.map(function(m){
+      return '<div class="row '+(m.r==='u'?'u':'')+'"><div class="b '+(m.r==='u'?'u':'bot')+'">'+m.t+'</div></div>';
+    }).join('');
+    grid.innerHTML +=
+      '<div class="sample '+s.cls+'">'+
+        '<h2>'+s.name+'</h2>'+
+        '<p class="desc">'+s.desc+'</p>'+
+        '<div class="chat">'+
+          '<div class="hdr"><div class="av">V</div><div><div class="nm">Verdant</div><div class="st"><span class="dot"></span>Online</div></div></div>'+
+          '<div class="msgs"><div class="day">Today</div>'+msgs+'</div>'+
+          '<div class="inp"><div class="pill">Type a message...</div><div class="snd">'+SEND+'</div></div>'+
+        '</div>'+
+      '</div>';
+  });
+</script>
+</body>
+</html>
