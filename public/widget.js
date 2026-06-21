@@ -74,8 +74,8 @@
     \
     .ma-chat {\
       position: fixed; bottom: 100px; ' + position + ': 24px; z-index: 2147483647;\
-      width: 380px; max-width: calc(100vw - 32px); height: 560px; max-height: calc(100vh - 120px);\
-      background: #0f0d1a; border-radius: 20px;\
+      width: 380px; max-width: calc(100vw - 48px); height: 520px; max-height: calc(100vh - 120px);\
+      background: #0f0d1a; border-radius: 16px;\
       display: none; flex-direction: column; overflow: hidden;\
       box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);\
       animation: ma-slideUp 0.3s ease;\
@@ -119,21 +119,21 @@
     .ma-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }\
     \
     .ma-msg {\
-      max-width: 82%; padding: 12px 16px; font-size: 14px; line-height: 1.55;\
+      max-width: 85%; padding: 10px 14px; font-size: 14px; line-height: 1.625;\
       word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;\
-      white-space: pre-wrap;\
+      white-space: pre-wrap; overflow: hidden;\
     }\
     .ma-msg.user {\
       align-self: flex-end; background: ' + primaryColor + '; color: white;\
-      border-radius: 18px 18px 4px 18px;\
+      border-radius: 16px 16px 6px 16px;\
     }\
     .ma-msg.bot {\
-      align-self: flex-start; background: rgba(255,255,255,0.07); color: #e8e8e8;\
-      border-radius: 18px 18px 18px 4px;\
+      align-self: flex-start; background: rgba(255,255,255,0.10); color: #e5e7eb;\
+      border-radius: 16px 16px 16px 6px;\
     }\
     .ma-msg.typing {\
-      align-self: flex-start; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.4);\
-      border-radius: 18px 18px 18px 4px;\
+      align-self: flex-start; background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.4);\
+      border-radius: 16px 16px 16px 6px;\
     }\
     .ma-typing-dots { display: inline-flex; gap: 4px; align-items: center; height: 20px; }\
     .ma-typing-dots span {\
@@ -164,15 +164,15 @@
       flex-shrink: 0;\
     }\
     .ma-input {\
-      flex: 1; padding: 12px 16px; border-radius: 12px;\
-      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);\
+      flex: 1; padding: 10px 14px; border-radius: 8px;\
+      background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.15);\
       color: #ffffff; font-size: 14px; outline: none;\
       transition: border-color 0.2s, background 0.2s;\
     }\
     .ma-input::placeholder { color: rgba(255,255,255,0.3); }\
     .ma-input:focus { border-color: ' + primaryColor + '; background: rgba(255,255,255,0.09); }\
     .ma-send {\
-      width: 40px; height: 40px; border-radius: 12px; background: ' + primaryColor + ';\
+      width: 40px; height: 40px; border-radius: 8px; background: ' + primaryColor + ';\
       color: white; border: none; cursor: pointer;\
       display: flex; align-items: center; justify-content: center;\
       transition: opacity 0.2s, transform 0.1s;\
@@ -196,7 +196,7 @@
       }\
       .ma-fab { bottom: 20px; ' + position + ': 16px; width: 54px; height: 54px; }\
       .ma-fab svg { width: 22px; height: 22px; }\
-      .ma-msg { max-width: 88%; font-size: 14px; }\
+      .ma-msg { max-width: 85%; font-size: 14px; }\
     }\
   '
   document.head.appendChild(style)
