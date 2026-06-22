@@ -13,6 +13,12 @@ const COLOR_PRESETS = [
   { name: 'Black', primary: '#1f2937' },
 ]
 
+const BG_PRESETS = [
+  { name: 'Light', value: '#f9fafb' },
+  { name: 'White', value: '#ffffff' },
+  { name: 'Cream', value: '#faf7f0' },
+]
+
 const FONT_PRESETS = [
   { name: 'System', value: 'system', css: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
   { name: 'Inter', value: 'inter', css: '"Inter", sans-serif' },
