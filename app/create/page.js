@@ -14,7 +14,7 @@ const COLOR_PRESETS = [
 ]
 
 const BG_PRESETS = [
-  { name: 'Light', value: '#f9fafb' },
+  { name: 'Light', value: '#f0f2f5' },
   { name: 'White', value: '#ffffff' },
   { name: 'Cream', value: '#faf7f0' },
 ]
@@ -48,7 +48,7 @@ export default function CreateAgent() {
   const [greeting, setGreeting] = useState('Hi! How can I help you today?')
   const [selectedColor, setSelectedColor] = useState(COLOR_PRESETS[0])
   const [customColor, setCustomColor] = useState('')
-  const [selectedBg, setSelectedBg] = useState({ name: 'Light', value: '#f9fafb' })
+  const [selectedBg, setSelectedBg] = useState({ name: 'Light', value: '#f0f2f5' })
   const [customBg, setCustomBg] = useState('')
   const [selectedFont, setSelectedFont] = useState(FONT_PRESETS[0])
   const [launcherIcon, setLauncherIcon] = useState('')
