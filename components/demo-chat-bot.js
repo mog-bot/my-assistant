@@ -1,7 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useThemeStyles } from './theme-provider'
+
+/**
+ * DemoChatBot — Homepage demo chat.
+ * Uses the EXACT SAME base design as public/widget.js.
+ * Customizable: colour, font, name. Base structure is fixed.
+ */
 
 const SITE_KNOWLEDGE = `You are the AI assistant on the My Assistant website. You help visitors with TWO things:
 
@@ -52,9 +57,7 @@ Optional customization attributes:
 - data-color="#7c3aed" (change the accent color — any hex color)
 - data-position="right" (or "left" — where the chat button appears)
 - data-greeting="Hi! How can I help?" (custom first message)
-
-Example with customization:
-<script src="https://my-assistant-bhre.vercel.app/widget.js" data-agent-id="demo" data-color="#2563eb" data-position="right" data-greeting="Welcome! Ask me anything."></script>
+- data-font="inter" (font: system, inter, poppins, rounded, serif, mono)
 
 Platform-specific instructions:
 - WordPress: Go to Appearance > Theme Editor > footer.php, paste before </body>. Or use "Insert Headers and Footers" plugin.
@@ -70,13 +73,6 @@ Platform-specific instructions:
 - Always encourage them to try the dashboard
 - You ARE the product demo — demonstrate value through clear, knowledgeable responses`
 
-const SUGGESTED_QUESTIONS = [
-  'How does it work?',
-  'How do I add this to my site?',
-  'What does it cost?',
-  'Show me the embed code',
-]
-
 export function DemoChatBot() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([
@@ -86,7 +82,9 @@ export function DemoChatBot() {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
-  const t = useThemeStyles()
+
+  // Customizable
+  const primaryColor = '#7c3aed'
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -137,94 +135,120 @@ export function DemoChatBot() {
     sendMessage()
   }, [sendMessage])
 
-  const handleSuggestion = useCallback((q) => {
-    sendMessage(q)
-  }, [sendMessage])
+  function nowTime() {
+    const d = new Date()
+    const h = d.getHours(), m = d.getMinutes()
+    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m
+  }
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* FAB — same as widget.js */}
       <button
         onClick={() => setIsOpen((o) => !o)}
         aria-label={isOpen ? 'Close chat' : 'Open demo chat'}
-        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full ${t.accentBg} text-white shadow-lg ${t.glowStrong} flex items-center justify-center text-2xl transition-all duration-200 hover:scale-110`}
+        className="fixed bottom-6 right-6 z-50 w-[60px] h-[60px] rounded-full text-white border-none cursor-pointer flex items-center justify-center transition-transform duration-200 hover:scale-[1.08]"
+        style={{ background: primaryColor, boxShadow: `0 4px 16px rgba(124, 58, 237, 0.4)` }}
       >
-        {isOpen ? '✕' : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {isOpen ? (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        ) : (
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
         )}
       </button>
 
-      {/* Chat Window */}
+      {/* Chat Window — mirrors widget.js base design exactly */}
       {isOpen && (
         <div
           role="dialog"
           aria-label="Chat with My Assistant"
-          className={`fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-48px)] h-[520px] max-h-[calc(100vh-120px)] rounded-2xl border ${t.cardBorder} shadow-2xl ${t.glowStrong} flex flex-col overflow-hidden`}
-          style={{ background: 'var(--chat-bg, #0f0d1a)' }}
+          className="fixed bottom-[100px] right-6 z-50 w-[380px] max-w-[calc(100vw-48px)] h-[560px] max-h-[calc(100vh-120px)] rounded-2xl flex flex-col overflow-hidden animate-[slideUp_0.3s_ease]"
+          style={{ background: '#ffffff', boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06)' }}
         >
           {/* Header */}
-          <div className={`${t.accentBg} px-5 py-4 flex items-center justify-between shrink-0`}>
-            <div>
-              <p className="text-white font-semibold text-sm">My Assistant</p>
-              <p className="text-white/70 text-xs">Ask about the product or how to set up</p>
+          <div
+            className="px-5 py-[18px] flex items-center justify-between shrink-0"
+            style={{ background: primaryColor }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/25 flex items-center justify-center text-white font-bold text-base shrink-0">
+                M
+              </div>
+              <div className="flex flex-col">
+                <span className="text-white font-semibold text-[15px] leading-tight">My Assistant</span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-green-300"></span>
+                  <span className="text-white/85 text-xs">Online</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-white/70 text-xs">Online</span>
-            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="w-[30px] h-[30px] rounded-full bg-white/20 border-none text-white cursor-pointer flex items-center justify-center text-lg hover:bg-white/35 transition-colors shrink-0"
+              aria-label="Close chat"
+            >
+              &times;
+            </button>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: '#0f0d1a' }}>
+          {/* Messages — same base: light bg, rounded bubbles */}
+          <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4 bg-[#f9fafb]">
+            {/* Date divider */}
+            <div className="text-center my-1">
+              <span className="text-xs text-gray-400 bg-[#f3f4f6] px-3.5 py-1 rounded-full">Today</span>
+            </div>
+
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden ${
+                  className={`max-w-[78%] px-4 py-3 text-[15px] leading-[1.5] ${
                     msg.role === 'user'
-                      ? `${t.accentBg} text-white rounded-2xl rounded-br-md`
-                      : 'bg-white/10 text-gray-200 rounded-2xl rounded-bl-md'
+                      ? 'rounded-[20px] rounded-br-[6px] text-white'
+                      : 'rounded-[20px] rounded-bl-[6px] text-gray-800 border border-gray-200'
                   }`}
-                  style={{ overflowWrap: 'anywhere' }}
+                  style={msg.role === 'user'
+                    ? { background: primaryColor }
+                    : { background: '#f3f4f6' }
+                  }
                 >
-                  {msg.content}
+                  {/* Text — break-word ensures it never overflows */}
+                  <span className="block break-words whitespace-pre-wrap" style={{ overflowWrap: 'break-word', wordBreak: 'break-word', hyphens: 'auto', minWidth: 0 }}>
+                    {msg.content}
+                  </span>
+                  <span className={`block text-[11px] mt-1 text-right ${
+                    msg.role === 'user' ? 'text-white/65' : 'text-gray-400'
+                  }`}>
+                    {nowTime()}
+                  </span>
                 </div>
               </div>
             ))}
+
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white/10 text-gray-400 px-3.5 py-2.5 rounded-2xl rounded-bl-md text-sm italic">
-                  Typing...
+                <div className="px-4 py-3 rounded-[20px] rounded-bl-[6px] bg-[#f3f4f6] border border-gray-200">
+                  <div className="flex gap-1 items-center h-5">
+                    <span className="w-[7px] h-[7px] rounded-full bg-black/30 animate-bounce" style={{ animationDelay: '0s' }}></span>
+                    <span className="w-[7px] h-[7px] rounded-full bg-black/30 animate-bounce" style={{ animationDelay: '0.16s' }}></span>
+                    <span className="w-[7px] h-[7px] rounded-full bg-black/30 animate-bounce" style={{ animationDelay: '0.32s' }}></span>
+                  </div>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Suggested Questions (show only at start) */}
-          {messages.length <= 2 && !isLoading && (
-            <div className="px-4 pb-2 flex flex-wrap gap-2 shrink-0" style={{ background: '#0f0d1a' }}>
-              {SUGGESTED_QUESTIONS.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => handleSuggestion(q)}
-                  className={`text-xs px-3 py-1.5 rounded-full border ${t.accentBorder} ${t.accent} hover:${t.accentBg} hover:text-white transition-colors`}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Input */}
+          {/* Input area — same base: pill input + circle send */}
           <form
             onSubmit={handleSubmit}
-            className="px-4 py-3 flex gap-2 shrink-0 border-t border-white/10"
-            style={{ background: '#0f0d1a' }}
+            className="px-4 py-3.5 flex gap-2.5 items-center shrink-0 border-t border-gray-200 bg-white"
           >
             <label htmlFor="demo-chat-input" className="sr-only">Type a message</label>
             <input
@@ -233,25 +257,31 @@ export function DemoChatBot() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask me anything..."
+              placeholder="Type a message..."
               disabled={isLoading}
-              className="flex-1 px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-400 disabled:opacity-50"
+              className="flex-1 px-[18px] py-3 rounded-full bg-[#f3f4f6] border border-gray-200 text-gray-800 text-[15px] outline-none transition-colors focus:border-purple-500 disabled:opacity-50 placeholder:text-gray-400"
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className={`px-4 py-2.5 ${t.accentBg} text-white rounded-lg text-sm font-semibold transition-opacity disabled:opacity-40`}
+              className="w-10 h-10 rounded-full text-white border-none cursor-pointer flex items-center justify-center transition-all hover:scale-[1.06] disabled:opacity-35 disabled:cursor-not-allowed disabled:transform-none shrink-0"
+              style={{ background: primaryColor }}
+              aria-label="Send"
             >
-              Send
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
             </button>
           </form>
-
-          {/* Badge */}
-          <div className="text-center py-2 text-[11px] text-gray-600 shrink-0" style={{ background: '#0f0d1a' }}>
-            Powered by <span className={t.accent}>My Assistant</span>
-          </div>
         </div>
       )}
+
+      <style jsx global>{`
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </>
   )
 }

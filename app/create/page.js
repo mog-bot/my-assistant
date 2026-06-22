@@ -3,22 +3,14 @@
 import { useState, useCallback } from 'react'
 
 const COLOR_PRESETS = [
-  { name: 'Purple', primary: '#7c3aed', bubble: '#7c3aed' },
-  { name: 'Blue', primary: '#2563eb', bubble: '#2563eb' },
-  { name: 'Green', primary: '#16a34a', bubble: '#16a34a' },
-  { name: 'Red', primary: '#dc2626', bubble: '#dc2626' },
-  { name: 'Orange', primary: '#ea580c', bubble: '#ea580c' },
-  { name: 'Pink', primary: '#db2777', bubble: '#db2777' },
-  { name: 'Teal', primary: '#0d9488', bubble: '#0d9488' },
-  { name: 'Black', primary: '#1f2937', bubble: '#1f2937' },
-]
-
-const BG_PRESETS = [
-  { name: 'Light', value: '#f9fafb' },
-  { name: 'White', value: '#ffffff' },
-  { name: 'Cream', value: '#faf7f0' },
-  { name: 'Slate', value: '#1e293b' },
-  { name: 'Dark', value: '#0f0d1a' },
+  { name: 'Purple', primary: '#7c3aed' },
+  { name: 'Blue', primary: '#2563eb' },
+  { name: 'Green', primary: '#16a34a' },
+  { name: 'Red', primary: '#dc2626' },
+  { name: 'Orange', primary: '#ea580c' },
+  { name: 'Pink', primary: '#db2777' },
+  { name: 'Teal', primary: '#0d9488' },
+  { name: 'Black', primary: '#1f2937' },
 ]
 
 const FONT_PRESETS = [
@@ -39,7 +31,7 @@ export default function CreateAgent() {
   const [greeting, setGreeting] = useState('Hi! How can I help you today?')
   const [selectedColor, setSelectedColor] = useState(COLOR_PRESETS[0])
   const [customColor, setCustomColor] = useState('')
-  const [selectedBg, setSelectedBg] = useState(BG_PRESETS[0])
+  const [selectedBg, setSelectedBg] = useState({ name: 'Light', value: '#f9fafb' })
   const [customBg, setCustomBg] = useState('')
   const [selectedFont, setSelectedFont] = useState(FONT_PRESETS[0])
   const [scrapeStatus, setScrapeStatus] = useState('idle')
@@ -87,7 +79,7 @@ export default function CreateAgent() {
     return (0.299 * r + 0.587 * g + 0.114 * b) > 150
   })()
 
-  const embedCode = `<script src="https://my-assistant-ashy.vercel.app/widget.js" data-color="${activeColor}" data-bg="${activeBg}" data-font="${activeFont}" data-name="${businessName || 'AI Assistant'}" data-greeting="${greeting}" data-business-email="${businessEmail}"${extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : ''}></script>`
+  const embedCode = `<script src="https://my-assistant-bhre.vercel.app/widget.js" data-color="${activeColor}" data-font="${activeFont}" data-name="${businessName || 'AI Assistant'}" data-greeting="${greeting}" data-business-email="${businessEmail}"${extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : ''}></script>`
 
   const previewMessages = [
     { role: 'bot', text: greeting },
