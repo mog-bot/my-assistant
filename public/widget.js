@@ -19,7 +19,7 @@
   var extraContext = attr('data-extra-context', '')
   var businessEmail = attr('data-business-email', '')
   var launcherIcon = attr('data-icon', '')
-  var bgColor = attr('data-bg', '#f9fafb')
+  var bgColor = attr('data-bg', '#f0f2f5')
 
   // Font customization
   var fontParam = attr('data-font', 'system')
@@ -70,7 +70,7 @@
 
   var bubbleBotBg = lightBg ? '#ffffff' : 'rgba(255,255,255,0.10)'
   var bubbleBotColor = lightBg ? '#1f2937' : '#e5e7eb'
-  var bubbleBotBorder = lightBg ? '1px solid rgba(0,0,0,0.06)' : 'none'
+  var bubbleBotBorder = lightBg ? '1px solid #dde1e7' : 'none'
   var dividerBg = lightBg ? '#ffffff' : 'rgba(255,255,255,0.08)'
   var dividerColor = lightBg ? '#9ca3af' : 'rgba(255,255,255,0.5)'
   var inputBg = lightBg ? '#f3f4f6' : 'rgba(255,255,255,0.10)'
@@ -158,7 +158,7 @@
     /* Bubbles */
     '.ma-bubble{max-width:78%;position:relative;padding:11px 15px;font-size:14.5px;line-height:1.55;border-radius:18px;}' +
     '.ma-bubble.user{background:' + primaryColor + ';color:#fff;border-bottom-right-radius:4px;}' +
-    '.ma-bubble.bot{background:' + bubbleBotBg + ';color:' + bubbleBotColor + ';border-bottom-left-radius:4px;border:' + bubbleBotBorder + ';box-shadow:0 1px 3px rgba(0,0,0,0.07);}' +
+    '.ma-bubble.bot{background:' + bubbleBotBg + ';color:' + bubbleBotColor + ';border-bottom-left-radius:4px;border:' + bubbleBotBorder + ';box-shadow:0 2px 8px rgba(0,0,0,0.10);}' +
 
     /* Text inside bubbles */
     '.ma-bubble .ma-text{display:block;overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;hyphens:auto;-webkit-hyphens:auto;-ms-hyphens:auto;min-width:0;}' +
