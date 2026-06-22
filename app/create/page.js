@@ -28,6 +28,17 @@ const FONT_PRESETS = [
   { name: 'Mono', value: 'mono', css: '"SF Mono", Menlo, monospace' },
 ]
 
+const ICON_PRESETS = [
+  { label: '💬', title: 'Chat bubble' },
+  { label: '🤖', title: 'Robot' },
+  { label: '✨', title: 'Sparkle' },
+  { label: '❓', title: 'Question' },
+  { label: '👋', title: 'Wave' },
+  { label: '💡', title: 'Idea' },
+  { label: '🛎️', title: 'Bell' },
+  { label: '⚡', title: 'Lightning' },
+]
+
 export default function CreateAgent() {
   const [step, setStep] = useState(1)
   const [websiteUrl, setWebsiteUrl] = useState('')
@@ -40,6 +51,7 @@ export default function CreateAgent() {
   const [selectedBg, setSelectedBg] = useState({ name: 'Light', value: '#f9fafb' })
   const [customBg, setCustomBg] = useState('')
   const [selectedFont, setSelectedFont] = useState(FONT_PRESETS[0])
+  const [launcherIcon, setLauncherIcon] = useState('')
   const [scrapeStatus, setScrapeStatus] = useState('idle')
   const [scrapeData, setScrapeData] = useState(null)
   const [error, setError] = useState('')
@@ -77,7 +89,7 @@ export default function CreateAgent() {
   const activeFont = selectedFont.value
   const activeFontCss = selectedFont.css
 
-  // Is the chosen background light or dark? (drives preview bubble/text colours)
+  // Is the chosen background light or dark?
   const bgIsLight = (() => {
     const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(activeBg)
     if (!m) return true
@@ -85,7 +97,18 @@ export default function CreateAgent() {
     return (0.299 * r + 0.587 * g + 0.114 * b) > 150
   })()
 
-  const embedCode = `<script src="https://my-assistant-bhre.vercel.app/widget.js" data-color="${activeColor}" data-font="${activeFont}" data-name="${businessName || 'AI Assistant'}" data-greeting="${greeting}" data-business-email="${businessEmail}"${extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : ''}></script>`
+  const embedCode = [
+    `<script src="https://my-assistant-bhre.vercel.app/widget.js"`,
+    ` data-color="${activeColor}"`,
+    ` data-bg="${activeBg}"`,
+    ` data-font="${activeFont}"`,
+    ` data-name="${businessName || 'AI Assistant'}"`,
+    ` data-greeting="${greeting}"`,
+    ` data-business-email="${businessEmail}"`,
+    launcherIcon ? ` data-icon="${launcherIcon}"` : '',
+    extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : '',
+    `></script>`,
+  ].join('')
 
   const previewMessages = [
     { role: 'bot', text: greeting },
@@ -170,7 +193,7 @@ export default function CreateAgent() {
             {step === 2 && (
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Customize your agent</h1>
-                <p className="text-gray-600 mb-8">Pick your colours and add any extra info your agent should know.</p>
+                <p className="text-gray-600 mb-8">Pick your colours, icon, and add any extra info your agent should know.</p>
 
                 {/* Business name */}
                 <label className="block text-sm font-medium text-gray-700 mb-2">Agent name</label>
@@ -191,6 +214,44 @@ export default function CreateAgent() {
                   placeholder="Hi! How can I help you today?"
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-6"
                 />
+
+                {/* Launcher icon */}
+                <label className="block text-sm font-medium text-gray-700 mb-2">Launcher button icon</label>
+                <p className="text-sm text-gray-500 mb-3">Pick a preset or type your own emoji. Leave blank for the default chat bubble.</p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {ICON_PRESETS.map((icon) => (
+                    <button
+                      key={icon.label}
+                      onClick={() => setLauncherIcon(launcherIcon === icon.label ? '' : icon.label)}
+                      title={icon.title}
+                      className={`w-11 h-11 rounded-xl text-xl flex items-center justify-center border-2 transition-all hover:scale-110 ${
+                        launcherIcon === icon.label
+                          ? 'border-gray-900 bg-gray-100 scale-110'
+                          : 'border-transparent bg-gray-100 hover:bg-gray-200'
+                      }`}
+                    >
+                      {icon.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 mb-6">
+                  <label className="text-sm text-gray-500 whitespace-nowrap">Custom emoji:</label>
+                  <input
+                    type="text"
+                    value={launcherIcon}
+                    onChange={(e) => setLauncherIcon(e.target.value.slice(0, 4))}
+                    placeholder="e.g. 🌿"
+                    className="w-28 px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-center text-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  {launcherIcon && (
+                    <button
+                      onClick={() => setLauncherIcon('')}
+                      className="text-sm text-gray-400 hover:text-gray-600 underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
 
                 {/* Colour picker */}
                 <label className="block text-sm font-medium text-gray-700 mb-3">Colour scheme</label>
@@ -392,14 +453,10 @@ export default function CreateAgent() {
                 {previewMessages.map((msg, i) => (
                   <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div
-                      className={`max-w-[80%] min-w-0 px-[15px] py-[11px] shadow-sm ${
-                        msg.role === 'user'
-                          ? 'rounded-[18px] rounded-br-[4px] text-white'
-                          : 'rounded-[18px] rounded-bl-[4px]'
-                      }`}
+                      className="max-w-[80%] min-w-0 px-[15px] py-[11px]"
                       style={msg.role === 'user'
-                        ? { backgroundColor: activeColor }
-                        : { backgroundColor: bgIsLight ? '#ffffff' : 'rgba(255,255,255,0.10)', color: bgIsLight ? '#1f2937' : '#e5e7eb', border: bgIsLight ? '1px solid #f0f0f0' : 'none' }}
+                        ? { backgroundColor: activeColor, color: '#fff', borderRadius: '18px', borderBottomRightRadius: '4px' }
+                        : { backgroundColor: bgIsLight ? '#ffffff' : 'rgba(255,255,255,0.10)', color: bgIsLight ? '#1f2937' : '#e5e7eb', borderRadius: '18px', borderBottomLeftRadius: '4px', border: bgIsLight ? '1px solid rgba(0,0,0,0.06)' : 'none', boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}
                     >
                       <span className="block text-[14px] leading-[1.5]" style={{ overflowWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{msg.text}</span>
                       <span className="block text-[10.5px] mt-[4px] text-right" style={{ color: msg.role === 'user' ? 'rgba(255,255,255,0.6)' : (bgIsLight ? '#9ca3af' : 'rgba(255,255,255,0.45)') }}>
@@ -421,6 +478,20 @@ export default function CreateAgent() {
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                 </div>
+              </div>
+            </div>
+
+            {/* FAB preview */}
+            <div className="mt-4 flex items-center gap-3">
+              <p className="text-sm text-gray-500">Launcher button:</p>
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg"
+                style={{ backgroundColor: activeColor }}
+              >
+                {launcherIcon
+                  ? <span style={{ fontSize: '26px', lineHeight: 1 }}>{launcherIcon}</span>
+                  : <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                }
               </div>
             </div>
           </div>
