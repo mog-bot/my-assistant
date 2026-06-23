@@ -14,20 +14,56 @@ export async function OPTIONS() {
   return new Response(null, { status: 204, headers: corsHeaders })
 }
 
+// ─── AI client (DeepSeek primary, Groq fallback) ──────────────────────────────
+// To use DeepSeek: add DEEPSEEK_API_KEY to Vercel env vars.
+// To revert to Groq only: remove DEEPSEEK_API_KEY from Vercel env vars.
+
 let groq
 function getGroq() {
   if (!groq) groq = new Groq({ apiKey: process.env.GROQ_API_KEY || process.env.groq_number_2 })
   return groq
 }
 
+async function callAI(messages, maxTokens = 400) {
+  const deepseekKey = process.env.DEEPSEEK_API_KEY
+  if (deepseekKey) {
+    try {
+      const res = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${deepseekKey}`,
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages,
+          temperature: 0.3,
+          max_tokens: maxTokens,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return data.choices[0]?.message?.content?.trim() || ''
+      }
+    } catch {
+      // DeepSeek failed — fall through to Groq
+    }
+  }
+  // Groq fallback
+  const completion = await getGroq().chat.completions.create({
+    messages,
+    model: GROQ_MODEL,
+    temperature: 0.3,
+    max_tokens: maxTokens,
+  })
+  return completion.choices[0]?.message?.content?.trim() || ''
+}
+
 const WIKI_UA = 'MyAssistantWidget/1.0 (https://my-assistant-bhre.vercel.app)'
 
 // ─── Wikipedia search ──────────────────────────────────────────────────────────
-// Two-step: full-text search → fetch article extracts for the top results.
-// Free, no API key needed, works reliably from server-side.
 async function searchWikipedia(query) {
   try {
-    // Step 1 — find matching articles
     const searchAc = new AbortController()
     const searchT  = setTimeout(() => searchAc.abort(), 4000)
     const searchRes = await fetch(
@@ -43,7 +79,6 @@ async function searchWikipedia(query) {
     const results    = searchData.query?.search || []
     if (!results.length) return ''
 
-    // Step 2 — fetch the intro extract for the top 2 articles
     const titles   = results.slice(0, 2).map(r => r.title).join('|')
     const extractAc = new AbortController()
     const extractT  = setTimeout(() => extractAc.abort(), 4000)
@@ -68,7 +103,7 @@ async function searchWikipedia(query) {
   }
 }
 
-// ─── Optional paid search (plug in a key to upgrade) ──────────────────────────
+// ─── Optional paid search ─────────────────────────────────────────────────────
 async function searchSerper(query) {
   const key = process.env.SERPER_API_KEY
   if (!key) return ''
@@ -119,7 +154,6 @@ async function searchBrave(query) {
   } catch { return '' }
 }
 
-// Master search — tries paid APIs first (if keys set), falls back to Wikipedia
 async function webSearch(query) {
   const [serper, brave] = await Promise.all([searchSerper(query), searchBrave(query)])
   if (serper) return serper
@@ -148,7 +182,6 @@ export async function POST(request) {
       return Response.json({ error: 'Message is required' }, { status: 400, headers: corsHeaders })
     }
 
-    // Fire AI call and web search IN PARALLEL — no extra latency when search is needed
     const businessName = body.businessName || 'this business'
     const systemPrompt = context
       ? `You are the AI assistant for ${businessName}. You speak as a representative of ${businessName} — use "we", "our", "us". Never say "based on the business information", "according to the website", or "the business". Just answer directly and naturally as a team member would.
@@ -160,23 +193,20 @@ ${context}`
       : `You are a helpful AI assistant. Answer questions concisely and naturally (2–4 sentences).
 If you don't know or the answer requires current or specific information you don't have, reply with exactly: NEEDS_SEARCH`
 
-    const [completion, searchResults] = await Promise.all([
-      getGroq().chat.completions.create({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: message },
-        ],
-        model: GROQ_MODEL,
-        temperature: 0.3,
-        max_tokens: 400,
-      }),
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user',   content: message },
+    ]
+
+    // Fire AI call and web search IN PARALLEL
+    const [reply1, searchResults] = await Promise.all([
+      callAI(messages, 400),
       enableSearch ? webSearch(message) : Promise.resolve(''),
     ])
 
-    let reply      = completion.choices[0]?.message?.content?.trim() || ''
+    let reply      = reply1
     let usedSearch = false
 
-    // If AI couldn't answer from business context, use pre-fetched search results
     if (enableSearch && reply === 'NEEDS_SEARCH') {
       if (searchResults) {
         usedSearch = true
@@ -193,23 +223,20 @@ ${searchResults}`
 Search results:
 ${searchResults}`
 
-        const fallback = await getGroq().chat.completions.create({
-          messages: [
-            { role: 'system', content: searchPrompt },
-            { role: 'user',   content: message },
-          ],
-          model: GROQ_MODEL,
-          temperature: 0.3,
-          max_tokens: 400,
-        })
-        reply = fallback.choices[0]?.message?.content?.trim() ||
-          "We weren't able to find a clear answer to that. Feel free to get in touch with us directly and we'll be happy to help!"
+        reply = await callAI([
+          { role: 'system', content: searchPrompt },
+          { role: 'user',   content: message },
+        ], 400)
+
+        if (!reply) {
+          reply = "We weren't able to find a clear answer to that. Feel free to get in touch with us directly and we'll be happy to help!"
+        }
       } else {
         reply = "We don't have that information to hand right now. Please reach out to us directly and we'll get you sorted!"
       }
     }
 
-    if (reply === 'NEEDS_SEARCH') {
+    if (reply === 'NEEDS_SEARCH' || !reply) {
       reply = "We're not sure about that one — please reach out to us directly and we'll be happy to help!"
     }
 
