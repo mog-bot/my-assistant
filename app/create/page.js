@@ -485,40 +485,60 @@ export default function CreateAgent() {
                   </button>
                 </div>
 
-                {/* Platform-specific install instructions */}
-                {platform && PLATFORM_INSTRUCTIONS[platform] && (
-                  <div className="mt-5 p-5 bg-indigo-50 border border-indigo-200 rounded-xl">
-                    <p className="text-indigo-900 font-semibold text-sm mb-4">
-                      How to install on {activePlatform?.name}:
-                    </p>
-                    <ol className="space-y-3">
-                      {PLATFORM_INSTRUCTIONS[platform].map((instruction, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          <span
-                            className="flex-shrink-0 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center mt-0.5"
-                            style={{ backgroundColor: activeColor }}
+                {/* Platform picker + install instructions */}
+                <div className="mt-5">
+                  {!platform ? (
+                    <div className="p-5 border-2 border-gray-200 rounded-xl bg-gray-50">
+                      <p className="text-gray-800 font-semibold text-sm mb-1">Where are you installing this?</p>
+                      <p className="text-gray-500 text-sm mb-4">Pick your platform and we'll show you exactly where to paste the code.</p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {PLATFORMS.map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => setPlatform(p.id)}
+                            className="px-2 py-3 rounded-xl text-xs border-2 border-gray-200 text-gray-700 hover:border-gray-800 hover:bg-white bg-white transition-all flex flex-col items-center gap-1.5"
                           >
-                            {i + 1}
-                          </span>
-                          <span className="text-indigo-800 text-sm leading-relaxed">{instruction}</span>
-                        </li>
-                      ))}
-                    </ol>
-
-                    {platform === 'wix' && (
-                      <p className="mt-4 text-xs text-indigo-700 bg-indigo-100 rounded-lg px-3 py-2">
-                        ⚠️ Use <strong>Settings → Custom Code</strong>, not the HTML embed element — the embed element runs in an iframe which breaks the widget positioning.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {!platform && (
-                  <div className="mt-5 p-4 bg-gray-50 border border-gray-200 rounded-xl">
-                    <p className="text-gray-700 text-sm font-medium mb-1">Where to paste it</p>
-                    <p className="text-gray-600 text-sm">Add the code just before the <code className="bg-gray-200 px-1 rounded">&lt;/body&gt;</code> closing tag on your site. Most platforms have a "Custom Code" or "Footer Scripts" setting where you can do this.</p>
-                  </div>
-                )}
+                            <span className="text-xl">{p.icon}</span>
+                            <span className="font-medium leading-tight text-center">{p.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-4 text-xs text-gray-400">Or paste it just before <code className="bg-gray-200 px-1 rounded">&lt;/body&gt;</code> on any other platform.</p>
+                    </div>
+                  ) : (
+                    <div className="p-5 bg-indigo-50 border border-indigo-200 rounded-xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-indigo-900 font-semibold text-sm">
+                          How to install on {activePlatform?.name}:
+                        </p>
+                        <button
+                          onClick={() => setPlatform('')}
+                          className="text-xs text-indigo-400 hover:text-indigo-700 underline"
+                        >
+                          Change platform
+                        </button>
+                      </div>
+                      <ol className="space-y-3">
+                        {PLATFORM_INSTRUCTIONS[platform].map((instruction, i) => (
+                          <li key={i} className="flex items-start gap-3">
+                            <span
+                              className="flex-shrink-0 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center mt-0.5"
+                              style={{ backgroundColor: activeColor }}
+                            >
+                              {i + 1}
+                            </span>
+                            <span className="text-indigo-800 text-sm leading-relaxed">{instruction}</span>
+                          </li>
+                        ))}
+                      </ol>
+                      {platform === 'wix' && (
+                        <p className="mt-4 text-xs text-indigo-700 bg-indigo-100 rounded-lg px-3 py-2">
+                          ⚠️ Use <strong>Settings → Custom Code</strong>, not the HTML embed element — the embed element runs in an iframe which breaks the widget positioning.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {scrapeData && (
                   <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
