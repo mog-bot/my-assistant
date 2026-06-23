@@ -149,14 +149,16 @@ export async function POST(request) {
     }
 
     // Fire AI call and web search IN PARALLEL — no extra latency when search is needed
+    const businessName = body.businessName || 'this business'
     const systemPrompt = context
-      ? `You are a helpful AI assistant for a business. Answer customer questions using the business information below. Be friendly and concise (2–4 sentences).
-If the question cannot be fully answered from the business information, reply with exactly: NEEDS_SEARCH
+      ? `You are the AI assistant for ${businessName}. You speak as a representative of ${businessName} — use "we", "our", "us". Never say "based on the business information", "according to the website", or "the business". Just answer directly and naturally as a team member would.
+Be friendly and concise (2–4 sentences).
+If you genuinely cannot answer from the information provided, reply with exactly: NEEDS_SEARCH
 
-Business Information:
+Our information:
 ${context}`
-      : `You are a helpful AI assistant. Answer questions concisely (2–4 sentences).
-If you don't know or the question requires current or specific information, reply with exactly: NEEDS_SEARCH`
+      : `You are a helpful AI assistant. Answer questions concisely and naturally (2–4 sentences).
+If you don't know or the answer requires current or specific information you don't have, reply with exactly: NEEDS_SEARCH`
 
     const [completion, searchResults] = await Promise.all([
       getGroq().chat.completions.create({
@@ -179,16 +181,16 @@ If you don't know or the question requires current or specific information, repl
       if (searchResults) {
         usedSearch = true
         const searchPrompt = context
-          ? `You are a helpful AI assistant for a business. The customer asked something not covered in the business data, so you looked it up. Use the search results below to give a helpful, accurate answer (2–4 sentences).
+          ? `You are the AI assistant for ${businessName}. Speak as "we"/"our" — never refer to "the website" or "the business information". You looked up additional information to answer this question. Use everything below to give a helpful, accurate answer (2–4 sentences).
 
-Business Information:
+Our information:
 ${context}
 
-Search Results:
+Additional search results:
 ${searchResults}`
           : `You are a helpful AI assistant. Use these search results to answer the question accurately and concisely (2–4 sentences).
 
-Search Results:
+Search results:
 ${searchResults}`
 
         const fallback = await getGroq().chat.completions.create({
@@ -201,14 +203,14 @@ ${searchResults}`
           max_tokens: 400,
         })
         reply = fallback.choices[0]?.message?.content?.trim() ||
-          "I searched but couldn't find a clear answer. Please contact the business directly."
+          "We weren't able to find a clear answer to that. Feel free to get in touch with us directly and we'll be happy to help!"
       } else {
-        reply = "I don't have that information and wasn't able to find it online. Please contact the business directly for help."
+        reply = "We don't have that information to hand right now. Please reach out to us directly and we'll get you sorted!"
       }
     }
 
     if (reply === 'NEEDS_SEARCH') {
-      reply = "I don't have that information, but the team will be happy to help if you reach out directly."
+      reply = "We're not sure about that one — please reach out to us directly and we'll be happy to help!"
     }
 
     const unansweredPhrases = [
