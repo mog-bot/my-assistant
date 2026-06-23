@@ -20,61 +20,85 @@ function getGroq() {
   return groq
 }
 
-// ─── Web search ────────────────────────────────────────────────────────────────
-// Two sources run in parallel:
-//   1. DDG Instant Answers API  — free JSON, no key, great for facts/definitions
-//   2. DDG HTML scrape           — free, no key, gives real result snippets
-// Both have their own timeout so a slow source never blocks the chat response.
+// ─── Search providers ──────────────────────────────────────────────────────────
+// Priority: Serper (Google results) > Brave Search > Wikipedia fallback
+// Add SERPER_API_KEY or BRAVE_API_KEY to .env.local to unlock real web search.
+// Wikipedia is always available as a free fallback for factual questions.
 
-async function ddgInstant(query) {
+async function searchSerper(query) {
+  const key = process.env.SERPER_API_KEY
+  if (!key) return ''
   try {
-    const url = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(query) +
-      '&format=json&no_html=1&skip_disambig=1&t=my-assistant-widget'
     const ac = new AbortController()
-    const t  = setTimeout(() => ac.abort(), 4000)
-    const res = await fetch(url, { signal: ac.signal })
-    clearTimeout(t)
-    if (!res.ok) return ''
-    const data = await res.json()
-    const parts = []
-    if (data.AbstractText)  parts.push(data.AbstractText)
-    if (data.Answer)        parts.push(data.Answer)
-    if (data.Definition)    parts.push(data.Definition)
-    // Related topics give useful bullet-point facts
-    if (Array.isArray(data.RelatedTopics)) {
-      data.RelatedTopics.slice(0, 4).forEach(t => { if (t.Text) parts.push(t.Text) })
-    }
-    return parts.join('\n').trim()
-  } catch { return '' }
-}
-
-async function ddgHtml(query) {
-  try {
-    const url = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query.slice(0, 200))
-    const ac  = new AbortController()
-    const t   = setTimeout(() => ac.abort(), 5000)
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+    const t  = setTimeout(() => ac.abort(), 6000)
+    const res = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: { 'X-API-KEY': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: query, num: 5 }),
       signal: ac.signal,
     })
     clearTimeout(t)
     if (!res.ok) return ''
-    const html = await res.text()
-    const snippets = []
-    const re = /<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g
-    let m
-    while ((m = re.exec(html)) !== null && snippets.length < 5) {
-      const text = m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
-      if (text) snippets.push(text)
-    }
-    return snippets.join('\n\n')
+    const data = await res.json()
+    const parts = []
+    if (data.answerBox?.answer)  parts.push(data.answerBox.answer)
+    if (data.answerBox?.snippet) parts.push(data.answerBox.snippet)
+    ;(data.organic || []).slice(0, 4).forEach(r => {
+      if (r.snippet) parts.push(`${r.title}: ${r.snippet}`)
+    })
+    return parts.join('\n\n')
+  } catch { return '' }
+}
+
+async function searchBrave(query) {
+  const key = process.env.BRAVE_API_KEY
+  if (!key) return ''
+  try {
+    const ac  = new AbortController()
+    const t   = setTimeout(() => ac.abort(), 6000)
+    const url = 'https://api.search.brave.com/res/v1/web/search?q=' +
+      encodeURIComponent(query) + '&count=5&text_decorations=false'
+    const res = await fetch(url, {
+      headers: { 'Accept': 'application/json', 'X-Subscription-Token': key },
+      signal: ac.signal,
+    })
+    clearTimeout(t)
+    if (!res.ok) return ''
+    const data = await res.json()
+    const parts = []
+    ;(data.web?.results || []).slice(0, 4).forEach(r => {
+      if (r.description) parts.push(`${r.title}: ${r.description}`)
+    })
+    return parts.join('\n\n')
+  } catch { return '' }
+}
+
+async function searchWikipedia(query) {
+  // Always available — good for factual/encyclopedic questions
+  try {
+    const ac  = new AbortController()
+    const t   = setTimeout(() => ac.abort(), 4000)
+    const url = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' +
+      encodeURIComponent(query) + '&format=json&srlimit=3&srprop=snippet'
+    const res = await fetch(url, { signal: ac.signal })
+    clearTimeout(t)
+    if (!res.ok) return ''
+    const data = await res.json()
+    const results = (data.query?.search || [])
+    if (!results.length) return ''
+    return results
+      .map(r => `${r.title}: ${r.snippet.replace(/<[^>]+>/g, '')}`)
+      .join('\n\n')
   } catch { return '' }
 }
 
 async function webSearch(query) {
-  // Run both sources simultaneously — use whichever returns content first
-  const [instant, html] = await Promise.all([ddgInstant(query), ddgHtml(query)])
-  return [instant, html].filter(Boolean).join('\n\n').slice(0, 3000)
+  // Try paid APIs first (if keys are set), fall back to Wikipedia
+  const [serper, brave] = await Promise.all([searchSerper(query), searchBrave(query)])
+  if (serper) return serper
+  if (brave)  return brave
+  // Wikipedia as last resort
+  return searchWikipedia(query)
 }
 
 // ─── Chat handler ──────────────────────────────────────────────────────────────
@@ -89,58 +113,55 @@ export async function POST(request) {
   }
 
   try {
-    const body        = await request.json()
-    const message     = sanitizeInput(body.message, MAX_MESSAGE_LENGTH)
-    const context     = sanitizeInput(body.context, MAX_CONTEXT_LENGTH)
+    const body         = await request.json()
+    const message      = sanitizeInput(body.message, MAX_MESSAGE_LENGTH)
+    const context      = sanitizeInput(body.context, MAX_CONTEXT_LENGTH)
     const enableSearch = body.enableSearch === true
 
     if (!message) {
       return Response.json({ error: 'Message is required' }, { status: 400, headers: corsHeaders })
     }
 
-    // ── Step 1: kick off web search and first AI call IN PARALLEL ─────────────
-    // The AI is asked to answer from business context if it can, or say NEEDS_SEARCH.
-    // Meanwhile the web search runs so there's no extra wait if we do need results.
-
+    // Fire web search and first AI call IN PARALLEL so there's no extra wait
+    // if search turns out to be needed.
     const systemPrompt = context
-      ? `You are a helpful AI assistant for a business. Answer customer questions based on the business information below. Be friendly, concise, and helpful (2–4 sentences max).
-If the question cannot be answered from the business information, reply with exactly the word: NEEDS_SEARCH
+      ? `You are a helpful AI assistant for a business. Answer customer questions based on the business information below. Be friendly and concise (2–4 sentences).
+If the question cannot be fully answered from the business information, reply with exactly: NEEDS_SEARCH
 
 Business Information:
 ${context}`
-      : `You are a helpful AI assistant. Answer questions concisely and helpfully (2–4 sentences max).
-If you genuinely don't know the answer, reply with exactly the word: NEEDS_SEARCH`
+      : `You are a helpful AI assistant. Answer questions concisely (2–4 sentences).
+If you genuinely don't know the current or specific answer, reply with exactly: NEEDS_SEARCH`
 
-    const aiCallPromise = getGroq().chat.completions.create({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user',   content: message },
-      ],
-      model: GROQ_MODEL,
-      temperature: 0.3,
-      max_tokens: 400,
-    })
+    const [completion, searchResults] = await Promise.all([
+      getGroq().chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: message },
+        ],
+        model: GROQ_MODEL,
+        temperature: 0.3,
+        max_tokens: 400,
+      }),
+      enableSearch ? webSearch(message) : Promise.resolve(''),
+    ])
 
-    // Only fire search fetch if search is enabled — still parallel with AI call
-    const searchPromise = enableSearch ? webSearch(message) : Promise.resolve('')
-
-    const [completion, searchResults] = await Promise.all([aiCallPromise, searchPromise])
-    let reply = completion.choices[0]?.message?.content?.trim() || ''
-
-    // ── Step 2: if AI couldn't answer, use pre-fetched web results ────────────
+    let reply      = completion.choices[0]?.message?.content?.trim() || ''
     let usedSearch = false
+
+    // If AI flagged it needs search, use the pre-fetched results
     if (enableSearch && reply === 'NEEDS_SEARCH') {
       if (searchResults) {
         usedSearch = true
         const searchPrompt = context
-          ? `You are a helpful AI assistant for a business. A customer asked a question not covered by the business data, so you searched the web. Use the web results to give a helpful, accurate answer (2–4 sentences). If the web results aren't relevant either, say so honestly.
+          ? `You are a helpful AI assistant for a business. Use the web search results below to answer the customer's question (2–4 sentences). Be honest that you found this via a web search.
 
 Business Information:
 ${context}
 
 Web Search Results:
 ${searchResults}`
-          : `You are a helpful AI assistant. Use the web search results below to answer the user's question accurately and concisely (2–4 sentences).
+          : `You are a helpful AI assistant. Use these web search results to answer the question accurately and concisely (2–4 sentences).
 
 Web Search Results:
 ${searchResults}`
@@ -155,35 +176,38 @@ ${searchResults}`
           max_tokens: 400,
         })
         reply = fallback.choices[0]?.message?.content?.trim() ||
-          "I searched the web but couldn't find a clear answer. You may want to contact the business directly."
+          "I searched but couldn't find a clear answer. Please contact the business directly."
       } else {
-        reply = "I don't have that information and wasn't able to find it online right now. You may want to contact the business directly."
+        reply = "I don't have that information and wasn't able to find it online. Please contact the business directly for help."
       }
     }
 
-    // Clean up if LLM still returned NEEDS_SEARCH with search disabled
     if (reply === 'NEEDS_SEARCH') {
-      reply = "I don't have that information, but you can contact the business directly for help."
+      reply = "I don't have that information, but the business team will be happy to help if you reach out directly."
     }
 
-    // ── Unanswered detection ──────────────────────────────────────────────────
     const unansweredPhrases = [
       "I don't have that information",
       "contact the business directly",
       "I'm not sure about that",
       "I don't have enough information",
       "I cannot find",
-      "not in the business information",
       "wasn't able to find",
+      "please reach out",
     ]
     const isUnanswered = unansweredPhrases.some(p =>
       reply.toLowerCase().includes(p.toLowerCase())
     )
 
-    const agentId      = body.agentId      || 'demo'
-    const businessEmail = body.businessEmail || null
-    const businessName  = body.businessName  || null
-    logQuestion({ question: message, answer: reply, unanswered: isUnanswered, agentId, businessEmail, businessName, ip })
+    logQuestion({
+      question: message,
+      answer: reply,
+      unanswered: isUnanswered,
+      agentId:       body.agentId      || 'demo',
+      businessEmail: body.businessEmail || null,
+      businessName:  body.businessName  || null,
+      ip,
+    })
 
     return Response.json({ reply, unanswered: isUnanswered, searched: usedSearch }, { headers: corsHeaders })
   } catch (error) {
