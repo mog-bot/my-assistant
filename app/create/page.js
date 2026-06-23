@@ -40,14 +40,14 @@ const ICON_PRESETS = [
 ]
 
 const PLATFORMS = [
-  { id: 'wix',         name: 'Wix',         icon: '🟦' },
-  { id: 'squarespace', name: 'Squarespace',  icon: '⬛' },
-  { id: 'shopify',     name: 'Shopify',      icon: '🛍️' },
-  { id: 'wordpress',   name: 'WordPress',    icon: '🔵' },
-  { id: 'webflow',     name: 'Webflow',      icon: '🌊' },
-  { id: 'framer',      name: 'Framer',       icon: '🎨' },
-  { id: 'html',        name: 'Plain HTML',   icon: '📄' },
-  { id: 'other',       name: 'Other',        icon: '🌐' },
+  { id: 'wix',         name: 'Wix' },
+  { id: 'squarespace', name: 'Squarespace' },
+  { id: 'shopify',     name: 'Shopify' },
+  { id: 'wordpress',   name: 'WordPress' },
+  { id: 'webflow',     name: 'Webflow' },
+  { id: 'framer',      name: 'Framer' },
+  { id: 'html',        name: 'Plain HTML' },
+  { id: 'other',       name: 'Other' },
 ]
 
 const PLATFORM_INSTRUCTIONS = {
@@ -262,14 +262,13 @@ export default function CreateAgent() {
                       <button
                         key={p.id}
                         onClick={() => setPlatform(platform === p.id ? '' : p.id)}
-                        className={`px-2 py-3 rounded-xl text-xs border-2 transition-all flex flex-col items-center gap-1.5 ${
+                        className={`px-3 py-2.5 rounded-xl text-xs font-medium border-2 transition-all ${
                           platform === p.id
                             ? 'border-gray-900 bg-gray-900 text-white'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-400 bg-white hover:bg-gray-50'
+                            : 'border-gray-200 text-gray-700 hover:border-gray-800 bg-white hover:bg-gray-50'
                         }`}
                       >
-                        <span className="text-xl">{p.icon}</span>
-                        <span className="font-medium leading-tight text-center">{p.name}</span>
+                        {p.name}
                       </button>
                     ))}
                   </div>
@@ -496,10 +495,9 @@ export default function CreateAgent() {
                           <button
                             key={p.id}
                             onClick={() => setPlatform(p.id)}
-                            className="px-2 py-3 rounded-xl text-xs border-2 border-gray-200 text-gray-700 hover:border-gray-800 hover:bg-white bg-white transition-all flex flex-col items-center gap-1.5"
+                            className="px-3 py-2.5 rounded-xl text-xs font-medium border-2 border-gray-200 text-gray-700 hover:border-gray-800 bg-white hover:bg-gray-50 transition-all"
                           >
-                            <span className="text-xl">{p.icon}</span>
-                            <span className="font-medium leading-tight text-center">{p.name}</span>
+                            {p.name}
                           </button>
                         ))}
                       </div>
