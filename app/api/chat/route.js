@@ -20,17 +20,61 @@ function getGroq() {
   return groq
 }
 
-// ─── Search providers ──────────────────────────────────────────────────────────
-// Priority: Serper (Google results) > Brave Search > Wikipedia fallback
-// Add SERPER_API_KEY or BRAVE_API_KEY to .env.local to unlock real web search.
-// Wikipedia is always available as a free fallback for factual questions.
+const WIKI_UA = 'MyAssistantWidget/1.0 (https://my-assistant-bhre.vercel.app)'
 
+// ─── Wikipedia search ──────────────────────────────────────────────────────────
+// Two-step: full-text search → fetch article extracts for the top results.
+// Free, no API key needed, works reliably from server-side.
+async function searchWikipedia(query) {
+  try {
+    // Step 1 — find matching articles
+    const searchAc = new AbortController()
+    const searchT  = setTimeout(() => searchAc.abort(), 4000)
+    const searchRes = await fetch(
+      'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' +
+        encodeURIComponent(query) +
+        '&format=json&srlimit=3&srprop=snippet',
+      { headers: { 'User-Agent': WIKI_UA }, signal: searchAc.signal }
+    )
+    clearTimeout(searchT)
+    if (!searchRes.ok) return ''
+
+    const searchData = await searchRes.json()
+    const results    = searchData.query?.search || []
+    if (!results.length) return ''
+
+    // Step 2 — fetch the intro extract for the top 2 articles
+    const titles   = results.slice(0, 2).map(r => r.title).join('|')
+    const extractAc = new AbortController()
+    const extractT  = setTimeout(() => extractAc.abort(), 4000)
+    const extractRes = await fetch(
+      'https://en.wikipedia.org/w/api.php?action=query&prop=extracts' +
+        '&exintro=1&explaintext=1&redirects=1&exchars=800' +
+        '&titles=' + encodeURIComponent(titles) + '&format=json',
+      { headers: { 'User-Agent': WIKI_UA }, signal: extractAc.signal }
+    )
+    clearTimeout(extractT)
+    if (!extractRes.ok) return ''
+
+    const extractData = await extractRes.json()
+    const pages       = Object.values(extractData.query?.pages || {})
+    const parts       = pages
+      .filter(p => p.extract && p.extract.length > 50)
+      .map(p => `${p.title}: ${p.extract.trim()}`)
+
+    return parts.join('\n\n').slice(0, 2500)
+  } catch {
+    return ''
+  }
+}
+
+// ─── Optional paid search (plug in a key to upgrade) ──────────────────────────
 async function searchSerper(query) {
   const key = process.env.SERPER_API_KEY
   if (!key) return ''
   try {
-    const ac = new AbortController()
-    const t  = setTimeout(() => ac.abort(), 6000)
+    const ac  = new AbortController()
+    const t   = setTimeout(() => ac.abort(), 6000)
     const res = await fetch('https://google.serper.dev/search', {
       method: 'POST',
       headers: { 'X-API-KEY': key, 'Content-Type': 'application/json' },
@@ -39,7 +83,7 @@ async function searchSerper(query) {
     })
     clearTimeout(t)
     if (!res.ok) return ''
-    const data = await res.json()
+    const data  = await res.json()
     const parts = []
     if (data.answerBox?.answer)  parts.push(data.answerBox.answer)
     if (data.answerBox?.snippet) parts.push(data.answerBox.snippet)
@@ -56,48 +100,30 @@ async function searchBrave(query) {
   try {
     const ac  = new AbortController()
     const t   = setTimeout(() => ac.abort(), 6000)
-    const url = 'https://api.search.brave.com/res/v1/web/search?q=' +
-      encodeURIComponent(query) + '&count=5&text_decorations=false'
-    const res = await fetch(url, {
-      headers: { 'Accept': 'application/json', 'X-Subscription-Token': key },
-      signal: ac.signal,
-    })
+    const res = await fetch(
+      'https://api.search.brave.com/res/v1/web/search?q=' +
+        encodeURIComponent(query) + '&count=5&text_decorations=false',
+      {
+        headers: { Accept: 'application/json', 'X-Subscription-Token': key },
+        signal: ac.signal,
+      }
+    )
     clearTimeout(t)
     if (!res.ok) return ''
     const data = await res.json()
-    const parts = []
-    ;(data.web?.results || []).slice(0, 4).forEach(r => {
-      if (r.description) parts.push(`${r.title}: ${r.description}`)
-    })
-    return parts.join('\n\n')
-  } catch { return '' }
-}
-
-async function searchWikipedia(query) {
-  // Always available — good for factual/encyclopedic questions
-  try {
-    const ac  = new AbortController()
-    const t   = setTimeout(() => ac.abort(), 4000)
-    const url = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' +
-      encodeURIComponent(query) + '&format=json&srlimit=3&srprop=snippet'
-    const res = await fetch(url, { signal: ac.signal })
-    clearTimeout(t)
-    if (!res.ok) return ''
-    const data = await res.json()
-    const results = (data.query?.search || [])
-    if (!results.length) return ''
-    return results
-      .map(r => `${r.title}: ${r.snippet.replace(/<[^>]+>/g, '')}`)
+    return (data.web?.results || [])
+      .slice(0, 4)
+      .filter(r => r.description)
+      .map(r => `${r.title}: ${r.description}`)
       .join('\n\n')
   } catch { return '' }
 }
 
+// Master search — tries paid APIs first (if keys set), falls back to Wikipedia
 async function webSearch(query) {
-  // Try paid APIs first (if keys are set), fall back to Wikipedia
   const [serper, brave] = await Promise.all([searchSerper(query), searchBrave(query)])
   if (serper) return serper
   if (brave)  return brave
-  // Wikipedia as last resort
   return searchWikipedia(query)
 }
 
@@ -122,16 +148,15 @@ export async function POST(request) {
       return Response.json({ error: 'Message is required' }, { status: 400, headers: corsHeaders })
     }
 
-    // Fire web search and first AI call IN PARALLEL so there's no extra wait
-    // if search turns out to be needed.
+    // Fire AI call and web search IN PARALLEL — no extra latency when search is needed
     const systemPrompt = context
-      ? `You are a helpful AI assistant for a business. Answer customer questions based on the business information below. Be friendly and concise (2–4 sentences).
+      ? `You are a helpful AI assistant for a business. Answer customer questions using the business information below. Be friendly and concise (2–4 sentences).
 If the question cannot be fully answered from the business information, reply with exactly: NEEDS_SEARCH
 
 Business Information:
 ${context}`
       : `You are a helpful AI assistant. Answer questions concisely (2–4 sentences).
-If you genuinely don't know the current or specific answer, reply with exactly: NEEDS_SEARCH`
+If you don't know or the question requires current or specific information, reply with exactly: NEEDS_SEARCH`
 
     const [completion, searchResults] = await Promise.all([
       getGroq().chat.completions.create({
@@ -149,21 +174,21 @@ If you genuinely don't know the current or specific answer, reply with exactly: 
     let reply      = completion.choices[0]?.message?.content?.trim() || ''
     let usedSearch = false
 
-    // If AI flagged it needs search, use the pre-fetched results
+    // If AI couldn't answer from business context, use pre-fetched search results
     if (enableSearch && reply === 'NEEDS_SEARCH') {
       if (searchResults) {
         usedSearch = true
         const searchPrompt = context
-          ? `You are a helpful AI assistant for a business. Use the web search results below to answer the customer's question (2–4 sentences). Be honest that you found this via a web search.
+          ? `You are a helpful AI assistant for a business. The customer asked something not covered in the business data, so you looked it up. Use the search results below to give a helpful, accurate answer (2–4 sentences).
 
 Business Information:
 ${context}
 
-Web Search Results:
+Search Results:
 ${searchResults}`
-          : `You are a helpful AI assistant. Use these web search results to answer the question accurately and concisely (2–4 sentences).
+          : `You are a helpful AI assistant. Use these search results to answer the question accurately and concisely (2–4 sentences).
 
-Web Search Results:
+Search Results:
 ${searchResults}`
 
         const fallback = await getGroq().chat.completions.create({
@@ -183,15 +208,12 @@ ${searchResults}`
     }
 
     if (reply === 'NEEDS_SEARCH') {
-      reply = "I don't have that information, but the business team will be happy to help if you reach out directly."
+      reply = "I don't have that information, but the team will be happy to help if you reach out directly."
     }
 
     const unansweredPhrases = [
       "I don't have that information",
       "contact the business directly",
-      "I'm not sure about that",
-      "I don't have enough information",
-      "I cannot find",
       "wasn't able to find",
       "please reach out",
     ]
@@ -200,10 +222,10 @@ ${searchResults}`
     )
 
     logQuestion({
-      question: message,
-      answer: reply,
-      unanswered: isUnanswered,
-      agentId:       body.agentId      || 'demo',
+      question:      message,
+      answer:        reply,
+      unanswered:    isUnanswered,
+      agentId:       body.agentId       || 'demo',
       businessEmail: body.businessEmail || null,
       businessName:  body.businessName  || null,
       ip,
