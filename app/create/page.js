@@ -39,6 +39,76 @@ const ICON_PRESETS = [
   { label: '⚡', title: 'Lightning' },
 ]
 
+const PLATFORMS = [
+  { id: 'wix',         name: 'Wix',         icon: '🟦' },
+  { id: 'squarespace', name: 'Squarespace',  icon: '⬛' },
+  { id: 'shopify',     name: 'Shopify',      icon: '🛍️' },
+  { id: 'wordpress',   name: 'WordPress',    icon: '🔵' },
+  { id: 'webflow',     name: 'Webflow',      icon: '🌊' },
+  { id: 'framer',      name: 'Framer',       icon: '🎨' },
+  { id: 'html',        name: 'Plain HTML',   icon: '📄' },
+  { id: 'other',       name: 'Other',        icon: '🌐' },
+]
+
+const PLATFORM_INSTRUCTIONS = {
+  wix: [
+    'Open your Wix dashboard and go to your site',
+    'Click Settings in the left menu',
+    'Select Custom Code under Advanced',
+    'Click + Add Code, choose Body — end of tag',
+    'Paste your code, give it a name, click Apply',
+    'Publish your site — your agent is live!',
+  ],
+  squarespace: [
+    'Open your Squarespace dashboard',
+    'Go to Settings → Advanced → Code Injection',
+    'Scroll down to the Footer section',
+    'Paste your code into the Footer box',
+    'Click Save — your agent will appear immediately',
+  ],
+  shopify: [
+    'Go to Online Store → Themes in your Shopify admin',
+    'Click the ⋯ menu next to your active theme',
+    'Select Edit code',
+    'Open layout/theme.liquid from the file list',
+    'Find the </body> tag near the bottom of the file',
+    'Paste your code just before </body> and click Save',
+  ],
+  wordpress: [
+    'In your WordPress admin, go to Plugins → Add New',
+    'Search for "Insert Headers and Footers" and install it',
+    'Activate the plugin, then go to Settings → Insert Headers and Footers',
+    'Paste your code in the Scripts in Footer box',
+    'Click Save — your agent will appear on all pages',
+  ],
+  webflow: [
+    'Open your Webflow project and go to Project Settings',
+    'Click the Custom Code tab',
+    'Scroll to the Footer Code section',
+    'Paste your code and click Save Changes',
+    'Publish your site to make it live',
+  ],
+  framer: [
+    'Open your Framer project',
+    'Go to Site Settings → General',
+    'Scroll to Custom Code → end of <body>',
+    'Paste your code and click Save',
+    'Publish your site — your agent is ready',
+  ],
+  html: [
+    'Open your HTML file in a text or code editor',
+    'Scroll to the bottom and find the </body> closing tag',
+    'Paste your code on the line just before </body>',
+    'Save the file and upload it to your server',
+  ],
+  other: [
+    'Look for a "Custom Code", "Footer Scripts", or "HTML Embed" section in your platform settings',
+    'Paste your code there — most platforms inject it before </body> automatically',
+    'If you can edit HTML directly, paste it just before the </body> closing tag',
+    'Save and publish — your agent should appear within a few seconds',
+  ],
+}
+
 export default function CreateAgent() {
   const [step, setStep] = useState(1)
   const [websiteUrl, setWebsiteUrl] = useState('')
@@ -52,6 +122,7 @@ export default function CreateAgent() {
   const [customBg, setCustomBg] = useState('')
   const [selectedFont, setSelectedFont] = useState(FONT_PRESETS[0])
   const [launcherIcon, setLauncherIcon] = useState('')
+  const [platform, setPlatform] = useState('')
   const [scrapeStatus, setScrapeStatus] = useState('idle')
   const [scrapeData, setScrapeData] = useState(null)
   const [error, setError] = useState('')
@@ -116,6 +187,8 @@ export default function CreateAgent() {
     { role: 'bot', text: scrapeData ? `Based on ${businessName || 'your website'}, I can help answer questions about your business. Ask me anything!` : 'I can help answer questions about your business. Ask me anything!' },
   ]
 
+  const activePlatform = PLATFORMS.find(p => p.id === platform)
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -153,7 +226,7 @@ export default function CreateAgent() {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Left: Form */}
           <div>
-            {/* Step 1: Website URL */}
+            {/* Step 1: Website URL + Platform picker */}
             {step === 1 && (
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Connect your website</h1>
@@ -179,6 +252,28 @@ export default function CreateAgent() {
                   </button>
                 </div>
                 {error && <p className="mt-3 text-red-600 text-sm">{error}</p>}
+
+                {/* Platform picker */}
+                <div className="mt-8">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">What platform is your website on?</label>
+                  <p className="text-sm text-gray-500 mb-3">We'll give you step-by-step install instructions tailored to your platform.</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {PLATFORMS.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setPlatform(platform === p.id ? '' : p.id)}
+                        className={`px-2 py-3 rounded-xl text-xs border-2 transition-all flex flex-col items-center gap-1.5 ${
+                          platform === p.id
+                            ? 'border-gray-900 bg-gray-900 text-white'
+                            : 'border-gray-200 text-gray-700 hover:border-gray-400 bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="text-xl">{p.icon}</span>
+                        <span className="font-medium leading-tight text-center">{p.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <button
                   onClick={() => setStep(2)}
@@ -376,7 +471,7 @@ export default function CreateAgent() {
             {step === 3 && (
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Your agent is ready!</h1>
-                <p className="text-gray-600 mb-8">Copy this code and paste it before the closing &lt;/body&gt; tag on your website.</p>
+                <p className="text-gray-600 mb-6">Copy this snippet and add it to your website.</p>
 
                 <div className="relative">
                   <pre className="bg-gray-900 text-green-400 text-sm p-5 rounded-xl overflow-x-auto border border-gray-700">
@@ -390,8 +485,43 @@ export default function CreateAgent() {
                   </button>
                 </div>
 
+                {/* Platform-specific install instructions */}
+                {platform && PLATFORM_INSTRUCTIONS[platform] && (
+                  <div className="mt-5 p-5 bg-indigo-50 border border-indigo-200 rounded-xl">
+                    <p className="text-indigo-900 font-semibold text-sm mb-4">
+                      How to install on {activePlatform?.name}:
+                    </p>
+                    <ol className="space-y-3">
+                      {PLATFORM_INSTRUCTIONS[platform].map((instruction, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <span
+                            className="flex-shrink-0 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center mt-0.5"
+                            style={{ backgroundColor: activeColor }}
+                          >
+                            {i + 1}
+                          </span>
+                          <span className="text-indigo-800 text-sm leading-relaxed">{instruction}</span>
+                        </li>
+                      ))}
+                    </ol>
+
+                    {platform === 'wix' && (
+                      <p className="mt-4 text-xs text-indigo-700 bg-indigo-100 rounded-lg px-3 py-2">
+                        ⚠️ Use <strong>Settings → Custom Code</strong>, not the HTML embed element — the embed element runs in an iframe which breaks the widget positioning.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {!platform && (
+                  <div className="mt-5 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                    <p className="text-gray-700 text-sm font-medium mb-1">Where to paste it</p>
+                    <p className="text-gray-600 text-sm">Add the code just before the <code className="bg-gray-200 px-1 rounded">&lt;/body&gt;</code> closing tag on your site. Most platforms have a "Custom Code" or "Footer Scripts" setting where you can do this.</p>
+                  </div>
+                )}
+
                 {scrapeData && (
-                  <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-green-800 text-sm font-medium">✓ Website data loaded</p>
                     <p className="text-green-700 text-sm mt-1">
                       {scrapeData.content?.length || 0} characters of content scraped from your site. Your agent will automatically read the page it's embedded on.
