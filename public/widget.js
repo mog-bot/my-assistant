@@ -18,6 +18,7 @@
   var extraContext  = attr('data-extra-context', '')
   var businessEmail = attr('data-business-email', '')
   var launcherIcon  = attr('data-icon', '')
+  var logoUrl       = attr('data-logo', '')
   var bgColor       = attr('data-bg', '#f0f2f5')
 
   // Font
@@ -211,7 +212,7 @@
     '<div class="ma-chat" role="dialog" aria-label="Chat assistant">'+
       '<div class="ma-header">'+
         '<div class="ma-header-left">'+
-          '<div class="ma-header-avatar">'+avatarLetter+'</div>'+
+          '<div class="ma-header-avatar">'+( logoUrl ? '<img src="'+logoUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>' : avatarLetter )+'</div>'+
           '<div class="ma-header-info">'+
             '<span class="ma-header-title">'+botName+'</span>'+
             '<div class="ma-header-status"><span class="ma-header-dot"></span><span class="ma-header-status-text">Online</span></div>'+
@@ -307,3 +308,4 @@
     })
   }
 })()
+
