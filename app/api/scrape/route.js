@@ -5,8 +5,40 @@ import { MAX_SCRAPE_CONTENT_LENGTH, MAX_SCRAPE_LINKS } from '@/lib/constants'
 
 const FETCH_TIMEOUT_MS = 10000
 
+// ─── Platform detection ────────────────────────────────────────────────────────
+function detectPlatform(url, html) {
+  // URL-based (most reliable — custom domains still get detected)
+  if (/wixsite\.com|\.wix\.com/i.test(url))           return 'wix'
+  if (/squarespace\.com/i.test(url))                   return 'squarespace'
+  if (/myshopify\.com/i.test(url))                     return 'shopify'
+  if (/webflow\.io/i.test(url))                        return 'webflow'
+  if (/framer\.app|framercdn\.com/i.test(url))         return 'framer'
+  if (/wordpress\.com/i.test(url))                     return 'wordpress'
+
+  // HTML fingerprints (for sites on custom domains)
+  if (/wix-code|wixstatic\.com|wixmp\.com/i.test(html))                         return 'wix'
+  if (/static1?\.squarespace\.com|squarespace-cdn\.com/i.test(html))            return 'squarespace'
+  if (/cdn\.shopify\.com|Shopify\.theme|myshopify/i.test(html))                 return 'shopify'
+  if (/wp-content|wp-includes|wordpress/i.test(html))                           return 'wordpress'
+  if (/data-wf-page|webflow\.com|\.webflow\./i.test(html))                      return 'webflow'
+  if (/framerusercontent\.com|framer\.com\/m\//i.test(html))                    return 'framer'
+
+  // Meta generator tag
+  const generatorMatch = html.match(/<meta[^>]+name=["']generator["'][^>]+content=["']([^"']+)/i)
+    || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']generator["']/i)
+  if (generatorMatch) {
+    const gen = generatorMatch[1].toLowerCase()
+    if (gen.includes('wix'))          return 'wix'
+    if (gen.includes('squarespace'))  return 'squarespace'
+    if (gen.includes('shopify'))      return 'shopify'
+    if (gen.includes('wordpress'))    return 'wordpress'
+    if (gen.includes('webflow'))      return 'webflow'
+  }
+
+  return null
+}
+
 export async function POST(request) {
-  // Rate limit — scraping is expensive, 5 per minute per IP
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
   const { allowed } = rateLimit(`scrape:${ip}`, 5, 60000)
 
@@ -25,13 +57,11 @@ export async function POST(request) {
       return Response.json({ error: 'URL is required' }, { status: 400 })
     }
 
-    // Validate URL (SSRF protection)
     const validation = validateUrl(url)
     if (!validation.valid) {
       return Response.json({ error: validation.error }, { status: 400 })
     }
 
-    // Fetch with timeout
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
 
@@ -55,7 +85,6 @@ export async function POST(request) {
       )
     }
 
-    // Verify content type is HTML
     const contentType = response.headers.get('content-type') || ''
     if (!contentType.includes('text/html') && !contentType.includes('text/plain')) {
       return Response.json(
@@ -65,22 +94,22 @@ export async function POST(request) {
     }
 
     const html = await response.text()
-    const $ = cheerio.load(html)
 
-    // Remove non-content elements
+    // Detect platform BEFORE cheerio strips scripts/meta
+    const platform = detectPlatform(validation.url, html)
+
+    const $ = cheerio.load(html)
     $('script, style, nav, footer, header, iframe, noscript, svg, form').remove()
 
     const title = $('title').text().trim()
     const metaDescription = $('meta[name="description"]').attr('content') || ''
 
-    // Extract structured content
     const bodyText = $('body')
       .text()
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, MAX_SCRAPE_CONTENT_LENGTH)
 
-    // Extract internal links for potential deep scraping
     const links = new Set()
     $('a[href]').each((_, el) => {
       const href = $(el).attr('href')
@@ -94,6 +123,7 @@ export async function POST(request) {
       description: metaDescription,
       content: bodyText,
       internalLinks: [...links],
+      platform,
       scrapedAt: new Date().toISOString(),
     })
   } catch (error) {
