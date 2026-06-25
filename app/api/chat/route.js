@@ -103,6 +103,37 @@ async function searchWikipedia(query) {
   }
 }
 
+// ─── Tavily search (free tier: 1000/month) ────────────────────────────────────
+async function searchTavily(query) {
+  const key = process.env.TAVILY_API_KEY
+  if (!key) return ''
+  try {
+    const ac = new AbortController()
+    const t  = setTimeout(() => ac.abort(), 6000)
+    const res = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: key,
+        query,
+        search_depth: 'basic',
+        max_results: 5,
+        include_answer: true,
+      }),
+      signal: ac.signal,
+    })
+    clearTimeout(t)
+    if (!res.ok) return ''
+    const data  = await res.json()
+    const parts = []
+    if (data.answer) parts.push(data.answer)
+    ;(data.results || []).slice(0, 4).forEach(r => {
+      if (r.content) parts.push(`${r.title}: ${r.content}`)
+    })
+    return parts.join('\n\n').slice(0, 2500)
+  } catch { return '' }
+}
+
 // ─── Optional paid search ─────────────────────────────────────────────────────
 async function searchSerper(query) {
   const key = process.env.SERPER_API_KEY
@@ -155,7 +186,12 @@ async function searchBrave(query) {
 }
 
 async function webSearch(query) {
-  const [serper, brave] = await Promise.all([searchSerper(query), searchBrave(query)])
+  const [tavily, serper, brave] = await Promise.all([
+    searchTavily(query),
+    searchSerper(query),
+    searchBrave(query),
+  ])
+  if (tavily) return tavily
   if (serper) return serper
   if (brave)  return brave
   return searchWikipedia(query)
