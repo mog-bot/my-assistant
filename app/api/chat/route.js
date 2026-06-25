@@ -103,6 +103,33 @@ async function searchWikipedia(query) {
   }
 }
 
+// ─── OpenAI web search (gpt-4o-search-preview) ───────────────────────────────
+async function searchOpenAI(query) {
+  const key = process.env.OPENAI_API_KEY
+  if (!key) return ''
+  try {
+    const ac = new AbortController()
+    const t  = setTimeout(() => ac.abort(), 10000)
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-search-preview',
+        messages: [{ role: 'user', content: query }],
+        max_tokens: 600,
+      }),
+      signal: ac.signal,
+    })
+    clearTimeout(t)
+    if (!res.ok) return ''
+    const data = await res.json()
+    return data.choices[0]?.message?.content?.trim() || ''
+  } catch { return '' }
+}
+
 // ─── Tavily search (free tier: 1000/month) ────────────────────────────────────
 async function searchTavily(query) {
   const key = process.env.TAVILY_API_KEY
@@ -186,14 +213,16 @@ async function searchBrave(query) {
 }
 
 async function webSearch(query) {
-  const [tavily, serper, brave] = await Promise.all([
+  const [openai, tavily, serper, brave] = await Promise.all([
+    searchOpenAI(query),
     searchTavily(query),
     searchSerper(query),
     searchBrave(query),
   ])
-  if (tavily) return tavily
-  if (serper) return serper
-  if (brave)  return brave
+  if (openai)  return openai
+  if (tavily)  return tavily
+  if (serper)  return serper
+  if (brave)   return brave
   return searchWikipedia(query)
 }
 
