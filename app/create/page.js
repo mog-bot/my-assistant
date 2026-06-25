@@ -123,9 +123,13 @@ export default function CreateAgent() {
   const [selectedFont, setSelectedFont] = useState(FONT_PRESETS[0])
   const [launcherIcon, setLauncherIcon] = useState('')
   const [platform, setPlatform] = useState('')
+  const [detectedPlatform, setDetectedPlatform] = useState('')
   const [scrapeStatus, setScrapeStatus] = useState('idle')
   const [scrapeData, setScrapeData] = useState(null)
   const [error, setError] = useState('')
+  const [helpQuestion, setHelpQuestion] = useState('')
+  const [helpAnswer, setHelpAnswer] = useState('')
+  const [helpLoading, setHelpLoading] = useState(false)
 
   const handleScrape = useCallback(async () => {
     setScrapeStatus('loading')
@@ -147,6 +151,10 @@ export default function CreateAgent() {
       const data = await res.json()
       setScrapeData(data)
       if (data.title) setBusinessName(data.title)
+      if (data.platform) {
+        setPlatform(data.platform)
+        setDetectedPlatform(data.platform)
+      }
       setScrapeStatus('done')
       setStep(2)
     } catch (err) {
@@ -188,6 +196,38 @@ export default function CreateAgent() {
   ]
 
   const activePlatform = PLATFORMS.find(p => p.id === platform)
+
+  const askInstallHelper = useCallback(async () => {
+    if (!helpQuestion.trim() || helpLoading) return
+    setHelpLoading(true)
+    setHelpAnswer('')
+    try {
+      const platformName = activePlatform?.name || 'your website'
+      const steps = platform ? (PLATFORM_INSTRUCTIONS[platform] || []).map((s, i) => `${i+1}. ${s}`).join('\n') : ''
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: helpQuestion,
+          context: `You are a friendly installation assistant helping someone add a chat widget to their ${platformName} website.
+The installation steps are:
+${steps}
+
+The embed code they need to paste is:
+${embedCode}
+
+Answer their question clearly and concisely. Be specific to ${platformName}. If they ask where to paste the code, refer to the numbered steps above.`,
+          businessName: 'My Assistant Install Helper',
+          enableSearch: false,
+        }),
+      })
+      const data = await res.json()
+      setHelpAnswer(data.reply || "Sorry, I couldn't get an answer. Please try again.")
+    } catch {
+      setHelpAnswer('Something went wrong. Please try again.')
+    }
+    setHelpLoading(false)
+  }, [helpQuestion, helpLoading, activePlatform, platform, embedCode])
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -262,16 +302,24 @@ export default function CreateAgent() {
                       <button
                         key={p.id}
                         onClick={() => setPlatform(platform === p.id ? '' : p.id)}
-                        className={`px-3 py-2.5 rounded-xl text-xs font-medium border-2 transition-all ${
+                        className={`relative px-3 py-2.5 rounded-xl text-xs font-medium border-2 transition-all ${
                           platform === p.id
                             ? 'border-gray-900 bg-gray-900 text-white'
                             : 'border-gray-200 text-gray-700 hover:border-gray-800 bg-white hover:bg-gray-50'
                         }`}
                       >
                         {p.name}
+                        {detectedPlatform === p.id && (
+                          <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" title="Auto-detected" />
+                        )}
                       </button>
                     ))}
                   </div>
+                  {detectedPlatform && (
+                    <p className="mt-2 text-xs text-green-600 font-medium">
+                      ✓ Auto-detected: {PLATFORMS.find(p => p.id === detectedPlatform)?.name}
+                    </p>
+                  )}
                 </div>
 
                 <button
@@ -554,7 +602,37 @@ export default function CreateAgent() {
                   </div>
                 )}
 
-                <div className="flex gap-3 mt-8">
+                {/* AI install helper */}
+                <div className="mt-6 p-5 bg-white border-2 border-gray-100 rounded-xl">
+                  <p className="text-gray-800 font-semibold text-sm mb-1">Need help installing it?</p>
+                  <p className="text-gray-500 text-xs mb-3">Ask the AI — it knows your platform and your code.</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={helpQuestion}
+                      onChange={(e) => setHelpQuestion(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && askInstallHelper()}
+                      placeholder={platform ? `e.g. "Where exactly do I paste this on ${activePlatform?.name}?"` : 'e.g. "Where do I paste this code?"'}
+                      className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent"
+                      style={{ '--tw-ring-color': activeColor }}
+                    />
+                    <button
+                      onClick={askInstallHelper}
+                      disabled={!helpQuestion.trim() || helpLoading}
+                      className="px-4 py-2.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: activeColor }}
+                    >
+                      {helpLoading ? '...' : 'Ask'}
+                    </button>
+                  </div>
+                  {helpAnswer && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-gray-800 leading-relaxed border border-gray-200">
+                      {helpAnswer}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setStep(2)}
                     className="px-5 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors"
