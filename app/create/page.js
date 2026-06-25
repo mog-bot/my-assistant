@@ -121,6 +121,7 @@ export default function CreateAgent() {
   const [selectedBg, setSelectedBg] = useState({ name: 'Light', value: '#f0f2f5' })
   const [customBg, setCustomBg] = useState('')
   const [selectedFont, setSelectedFont] = useState(FONT_PRESETS[0])
+  const [logoUrl, setLogoUrl] = useState('')
   const [launcherIcon, setLauncherIcon] = useState('')
   const [platform, setPlatform] = useState('')
   const [detectedPlatform, setDetectedPlatform] = useState('')
@@ -185,6 +186,7 @@ export default function CreateAgent() {
     ` data-greeting="${greeting}"`,
     ` data-business-email="${businessEmail}"`,
     launcherIcon ? ` data-icon="${launcherIcon}"` : '',
+    logoUrl ? ` data-logo="${logoUrl}"` : '',
     extraInfo ? ` data-extra-context="${extraInfo.replace(/"/g, '&quot;')}"` : '',
     `></script>`,
   ].join('')
@@ -346,6 +348,27 @@ Answer their question clearly and concisely. Be specific to ${platformName}. If 
                   placeholder="e.g. Acme Support"
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-6"
                 />
+
+                {/* Logo */}
+                <label className="block text-sm font-medium text-gray-700 mb-2">Business logo <span className="text-gray-400 font-normal">(optional)</span></label>
+                <p className="text-sm text-gray-500 mb-2">Paste a link to your logo image — it'll appear in the chat header instead of the default letter.</p>
+                <div className="flex gap-3 items-center mb-6">
+                  <input
+                    type="text"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="https://yoursite.com/logo.png"
+                    className="flex-1 px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  {logoUrl && (
+                    <img
+                      src={logoUrl}
+                      alt="Logo preview"
+                      className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                      onError={(e) => { e.target.style.display = 'none' }}
+                    />
+                  )}
+                </div>
 
                 {/* Greeting */}
                 <label className="block text-sm font-medium text-gray-700 mb-2">Greeting message</label>
@@ -657,8 +680,11 @@ Answer their question clearly and concisely. Be specific to ${platformName}. If 
             <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white" style={{ height: '520px', fontFamily: activeFontCss }}>
               {/* Chat header */}
               <div className="px-5 py-4 flex items-center gap-3" style={{ backgroundColor: activeColor }}>
-                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm">
-                  {(businessName || 'A').charAt(0).toUpperCase()}
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                  {logoUrl
+                    ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.target.style.display='none' }} />
+                    : (businessName || 'A').charAt(0).toUpperCase()
+                  }
                 </div>
                 <div>
                   <div className="text-white font-semibold text-sm">{businessName || 'AI Assistant'}</div>
