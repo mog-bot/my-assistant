@@ -351,22 +351,56 @@ Answer their question clearly and concisely. Be specific to ${platformName}. If 
 
                 {/* Logo */}
                 <label className="block text-sm font-medium text-gray-700 mb-2">Business logo <span className="text-gray-400 font-normal">(optional)</span></label>
-                <p className="text-sm text-gray-500 mb-2">Paste a link to your logo image — it'll appear in the chat header instead of the default letter.</p>
-                <div className="flex gap-3 items-center mb-6">
-                  <input
-                    type="text"
-                    value={logoUrl}
-                    onChange={(e) => setLogoUrl(e.target.value)}
-                    placeholder="https://yoursite.com/logo.png"
-                    className="flex-1 px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                  {logoUrl && (
-                    <img
-                      src={logoUrl}
-                      alt="Logo preview"
-                      className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                      onError={(e) => { e.target.style.display = 'none' }}
+                <p className="text-sm text-gray-500 mb-2">Upload a screenshot or image — it'll appear in the chat header instead of the default letter.</p>
+                <div className="flex gap-4 items-center mb-6">
+                  <label
+                    className="flex flex-col items-center justify-center w-28 h-20 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-center"
+                    style={{ minWidth: '7rem' }}
+                  >
+                    <svg className="w-6 h-6 text-gray-400 mb-1" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+                    <span className="text-xs text-gray-500">{logoUrl ? 'Change image' : 'Upload image'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        const reader = new FileReader()
+                        reader.onload = (ev) => {
+                          const img = new Image()
+                          img.onload = () => {
+                            const size = 80
+                            const canvas = document.createElement('canvas')
+                            canvas.width = size; canvas.height = size
+                            const ctx = canvas.getContext('2d')
+                            // Center-crop
+                            const min = Math.min(img.width, img.height)
+                            const sx = (img.width - min) / 2
+                            const sy = (img.height - min) / 2
+                            ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size)
+                            setLogoUrl(canvas.toDataURL('image/jpeg', 0.85))
+                          }
+                          img.src = ev.target.result
+                        }
+                        reader.readAsDataURL(file)
+                      }}
                     />
+                  </label>
+                  {logoUrl && (
+                    <div className="flex flex-col items-center gap-2">
+                      <img
+                        src={logoUrl}
+                        alt="Logo preview"
+                        className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow"
+                      />
+                      <button
+                        onClick={() => setLogoUrl('')}
+                        className="text-xs text-red-400 hover:text-red-600 underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -752,3 +786,4 @@ Answer their question clearly and concisely. Be specific to ${platformName}. If 
     </main>
   )
 }
+
