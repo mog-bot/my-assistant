@@ -201,9 +201,11 @@
   // ============================================================
   var chatIconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
   var closeIconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M18 6L6 18M6 6l12 12"/></svg>'
-  var fabOpenContent = launcherIcon
-    ? '<span class="ma-fab-icon">'+launcherIcon+'</span>'
-    : chatIconSvg
+  var fabOpenContent = logoUrl
+    ? '<img src="'+logoUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>'
+    : launcherIcon
+      ? '<span class="ma-fab-icon">'+launcherIcon+'</span>'
+      : chatIconSvg
 
   var container = document.createElement('div')
   container.id = WIDGET_ID
@@ -308,4 +310,5 @@
     })
   }
 })()
+
 
