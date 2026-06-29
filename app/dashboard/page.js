@@ -1,235 +1,239 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useThemeStyles } from '@/components/theme-provider'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { useEffect, useState } from 'react'
+
+function timeAgo(ts) {
+  if (!ts) return ''
+  const diff = Date.now() - new Date(ts).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1)  return 'just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
 
 export default function Dashboard() {
-  const [websiteUrl, setWebsiteUrl] = useState('')
-  const [status, setStatus] = useState('idle')
-  const [businessData, setBusinessData] = useState(null)
-  const [error, setError] = useState('')
-  const [testMessage, setTestMessage] = useState('')
-  const [chatMessages, setChatMessages] = useState([])
-  const [chatLoading, setChatLoading] = useState(false)
-  const t = useThemeStyles()
+  const [data,    setData]    = useState(null)
+  const [error,   setError]   = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [tab,     setTab]     = useState('overview') // overview | unanswered | agents | activity
 
-  const handleScrape = useCallback(async (e) => {
-    e.preventDefault()
-    setStatus('scraping')
-    setError('')
-
+  async function load() {
+    setLoading(true)
+    setError(null)
     try {
-      let url = websiteUrl.trim()
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url
-      }
-
-      const res = await fetch('/api/scrape', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || 'Failed to scrape website')
-      }
-
-      const data = await res.json()
-      setBusinessData(data)
-      setStatus('ready')
-    } catch (err) {
-      setError(err.message)
-      setStatus('error')
-    }
-  }, [websiteUrl])
-
-  const handleChat = useCallback(async (e) => {
-    e.preventDefault()
-    if (!testMessage.trim() || !businessData) return
-
-    const userMsg = testMessage.trim()
-    setChatMessages((prev) => [...prev, { role: 'user', content: userMsg }])
-    setTestMessage('')
-    setChatLoading(true)
-
-    try {
-      const context = `${businessData.title}\n${businessData.description}\n${businessData.content}`
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, context }),
-      })
-
-      const data = await res.json()
-      setChatMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: data.reply || data.error || 'No response' },
-      ])
-    } catch {
-      setChatMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
-      ])
+      const res = await fetch('/api/dashboard')
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setData(await res.json())
+    } catch (e) {
+      setError(e.message)
     } finally {
-      setChatLoading(false)
+      setLoading(false)
     }
-  }, [testMessage, businessData])
+  }
 
-  const embedCode = `<script src="${typeof window !== 'undefined' ? window.location.origin : ''}/widget.js" data-agent-id="demo"></script>`
+  useEffect(() => { load() }, [])
+
+  const card  = 'bg-gray-900 border border-gray-800 rounded-xl p-6'
+  const badge = (c) => `inline-block text-xs px-2 py-0.5 rounded-full font-medium ${c}`
+
+  if (loading) return (
+    <div className="min-h-screen bg-black flex items-center justify-center text-gray-400">
+      Loading dashboard…
+    </div>
+  )
+
+  if (error) return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
+      <p className="text-red-400">Error: {error}</p>
+      <button onClick={load} className="px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white rounded-lg text-sm">
+        Retry
+      </button>
+    </div>
+  )
+
+  const d = data
 
   return (
-    <main className={`min-h-screen ${t.bg} ${t.text} ${t.font}`}>
-      <nav className={`border-b ${t.navBorder} px-8 py-4`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className={`text-xl font-bold ${t.text}`}>
-            <span className={t.accent}>&gt;_</span> My Assistant
-          </a>
-          <div className="flex items-center gap-4">
-            <span className={`text-sm ${t.textMuted}`}>Dashboard</span>
-            <ThemeToggle />
-          </div>
+    <div className="min-h-screen bg-black text-white">
+      {/* Header */}
+      <div className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-white">Owner Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-0.5">All agents · All time</p>
         </div>
-      </nav>
+        <button
+          onClick={load}
+          className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-colors"
+        >
+          ↻ Refresh
+        </button>
+      </div>
 
-      <div className="max-w-4xl mx-auto px-8 py-12">
-        <h1 className={`text-3xl font-bold mb-8 ${t.text}`}>Set Up Your AI Agent</h1>
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
-        {/* Step 1: Connect Website */}
-        <section className="mb-12">
-          <h2 className={`text-xl font-semibold mb-4 flex items-center gap-3 ${t.text}`}>
-            <span className={`w-8 h-8 ${t.accentBg} rounded-full flex items-center justify-center text-sm font-bold text-white`}>1</span>
-            Connect Your Website
-          </h2>
-          <form onSubmit={handleScrape} className="flex gap-4">
-            <input
-              type="text"
-              value={websiteUrl}
-              onChange={(e) => setWebsiteUrl(e.target.value)}
-              placeholder="yourwebsite.com"
-              className={`flex-1 px-4 py-3 rounded-lg ${t.inputBg} border ${t.inputBorder} ${t.text} placeholder-gray-400 focus:outline-none ${t.inputFocus}`}
-              disabled={status === 'scraping'}
-              required
-            />
-            <button
-              type="submit"
-              disabled={status === 'scraping'}
-              className={`px-6 py-3 ${t.accentBg} ${t.accentHover} text-white rounded-lg font-semibold transition-colors disabled:opacity-50`}
-            >
-              {status === 'scraping' ? 'Scanning...' : 'Scan Website'}
-            </button>
-          </form>
-          {error && (
-            <p className="mt-3 text-red-400 text-sm">{error}</p>
-          )}
-        </section>
-
-        {/* Step 2: Review Data */}
-        {businessData && (
-          <section className="mb-12">
-            <h2 className={`text-xl font-semibold mb-4 flex items-center gap-3 ${t.text}`}>
-              <span className={`w-8 h-8 ${t.accentBg} rounded-full flex items-center justify-center text-sm font-bold text-white`}>2</span>
-              Your Business Data
-            </h2>
-            <div className={`${t.cardBg} border ${t.cardBorder} rounded-xl p-6`}>
-              <h3 className={`font-semibold text-lg mb-1 ${t.text}`}>{businessData.title || 'Untitled'}</h3>
-              <p className={`${t.textMuted} text-sm mb-4`}>{businessData.description || 'No description found'}</p>
-              <div className={`${t.codeBg} rounded-lg p-4 max-h-48 overflow-y-auto`}>
-                <p className={`${t.textMuted} text-sm whitespace-pre-wrap`}>
-                  {businessData.content?.slice(0, 1000) || 'No content extracted'}
-                  {businessData.content?.length > 1000 && '...'}
-                </p>
-              </div>
-              <p className={`${t.textSubtle} text-xs mt-2`}>
-                {businessData.content?.length || 0} characters extracted •{' '}
-                {businessData.internalLinks?.length || 0} internal pages found
-              </p>
+        {/* Stat cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Total Messages',   value: d.totalMessages,   color: 'text-purple-400' },
+            { label: 'Unanswered',       value: d.unansweredCount, color: 'text-red-400',
+              sub: `${d.unansweredRate}% of all` },
+            { label: 'Active Agents',    value: d.totalAgents,     color: 'text-green-400' },
+            { label: 'Today',            value: d.todayCount,      color: 'text-blue-400',
+              sub: `${d.weekCount} this week` },
+          ].map(s => (
+            <div key={s.label} className={card}>
+              <p className="text-gray-500 text-sm">{s.label}</p>
+              <p className={`text-4xl font-bold mt-2 ${s.color}`}>{s.value}</p>
+              {s.sub && <p className="text-gray-600 text-xs mt-1">{s.sub}</p>}
             </div>
-          </section>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-gray-800 pb-0">
+          {[
+            { id: 'overview',   label: 'Top Topics' },
+            { id: 'unanswered', label: `Unanswered (${d.unansweredCount})` },
+            { id: 'agents',     label: `Agents (${d.totalAgents})` },
+            { id: 'activity',   label: 'Recent Activity' },
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+                tab === t.id
+                  ? 'bg-gray-900 text-white border border-b-0 border-gray-800'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab: Top Topics */}
+        {tab === 'overview' && (
+          <div className={card}>
+            <h2 className="text-gray-300 font-semibold mb-5">Most Common Topics</h2>
+            {d.topTopics.length === 0 ? (
+              <p className="text-gray-600 text-sm">No messages yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {d.topTopics.map((t, i) => {
+                  const max   = d.topTopics[0].count
+                  const width = Math.round((t.count / max) * 100)
+                  return (
+                    <div key={t.word} className="flex items-center gap-3">
+                      <span className="text-gray-500 text-xs w-5 text-right">{i + 1}</span>
+                      <span className="text-gray-300 text-sm w-28 truncate capitalize">{t.word}</span>
+                      <div className="flex-1 bg-gray-800 rounded-full h-2">
+                        <div
+                          className="bg-purple-600 rounded-full h-2 transition-all"
+                          style={{ width: `${width}%` }}
+                        />
+                      </div>
+                      <span className="text-gray-500 text-xs w-6 text-right">{t.count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Step 3: Test Your Agent */}
-        {status === 'ready' && (
-          <section className="mb-12">
-            <h2 className={`text-xl font-semibold mb-4 flex items-center gap-3 ${t.text}`}>
-              <span className={`w-8 h-8 ${t.accentBg} rounded-full flex items-center justify-center text-sm font-bold text-white`}>3</span>
-              Test Your Agent
-            </h2>
-            <div className={`${t.cardBg} border ${t.cardBorder} rounded-xl overflow-hidden`}>
-              <div className="p-6 min-h-[200px] max-h-[400px] overflow-y-auto space-y-4">
-                {chatMessages.length === 0 && (
-                  <p className={`${t.textSubtle} text-center py-8`}>
-                    Ask your agent a question about your business
-                  </p>
-                )}
-                {chatMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] px-4 py-3 rounded-xl ${
-                        msg.role === 'user'
-                          ? `${t.accentBg} text-white`
-                          : `${t.cardBg} border ${t.cardBorder} ${t.text}`
-                      }`}
-                    >
-                      {msg.content}
+        {/* Tab: Unanswered */}
+        {tab === 'unanswered' && (
+          <div className={card}>
+            <h2 className="text-gray-300 font-semibold mb-5">Unanswered Questions</h2>
+            {d.unansweredQuestions.length === 0 ? (
+              <p className="text-gray-600 text-sm">No unanswered questions. 🎉</p>
+            ) : (
+              <div className="divide-y divide-gray-800">
+                {d.unansweredQuestions.map((q, i) => (
+                  <div key={i} className="py-3 flex items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-200 text-sm">{q.question}</p>
+                      <p className="text-gray-600 text-xs mt-1">{q.businessName}</p>
                     </div>
+                    <span className="text-gray-600 text-xs whitespace-nowrap">{timeAgo(q.timestamp)}</span>
                   </div>
                 ))}
-                {chatLoading && (
-                  <div className="flex justify-start">
-                    <div className={`${t.cardBg} border ${t.cardBorder} px-4 py-3 rounded-xl ${t.textMuted}`}>
-                      Thinking...
-                    </div>
-                  </div>
-                )}
               </div>
-              <form onSubmit={handleChat} className={`border-t ${t.navBorder} p-4 flex gap-3`}>
-                <input
-                  type="text"
-                  value={testMessage}
-                  onChange={(e) => setTestMessage(e.target.value)}
-                  placeholder="Ask a question about your business..."
-                  className={`flex-1 px-4 py-3 rounded-lg ${t.inputBg} border ${t.inputBorder} ${t.text} placeholder-gray-400 focus:outline-none ${t.inputFocus}`}
-                  disabled={chatLoading}
-                />
-                <button
-                  type="submit"
-                  disabled={chatLoading || !testMessage.trim()}
-                  className={`px-6 py-3 ${t.accentBg} ${t.accentHover} text-white rounded-lg font-semibold transition-colors disabled:opacity-50`}
-                >
-                  Send
-                </button>
-              </form>
-            </div>
-          </section>
+            )}
+          </div>
         )}
 
-        {/* Step 4: Embed */}
-        {status === 'ready' && (
-          <section className="mb-12">
-            <h2 className={`text-xl font-semibold mb-4 flex items-center gap-3 ${t.text}`}>
-              <span className={`w-8 h-8 ${t.accentBg} rounded-full flex items-center justify-center text-sm font-bold text-white`}>4</span>
-              Add to Your Website
-            </h2>
-            <p className={`${t.textMuted} mb-4`}>
-              Copy this code and paste it before the closing <code className={t.accent}>&lt;/body&gt;</code> tag on your website.
-            </p>
-            <div className={`${t.codeBg} border ${t.cardBorder} rounded-xl p-4 ${t.font} text-sm ${t.codeText} relative`}>
-              <code>{embedCode}</code>
-              <button
-                onClick={() => navigator.clipboard?.writeText(embedCode)}
-                className={`absolute top-3 right-3 px-3 py-1 ${t.inputBg} ${t.cardHover} rounded text-xs ${t.textMuted} transition-colors`}
-              >
-                Copy
-              </button>
-            </div>
-          </section>
+        {/* Tab: Agents */}
+        {tab === 'agents' && (
+          <div className={card}>
+            <h2 className="text-gray-300 font-semibold mb-5">Per-Agent Breakdown</h2>
+            {d.agentStats.length === 0 ? (
+              <p className="text-gray-600 text-sm">No agents yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-500 text-left border-b border-gray-800">
+                      <th className="pb-3 font-medium">Business</th>
+                      <th className="pb-3 font-medium">Agent ID</th>
+                      <th className="pb-3 font-medium text-right">Messages</th>
+                      <th className="pb-3 font-medium text-right">Unanswered</th>
+                      <th className="pb-3 font-medium text-right">Last Active</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {d.agentStats.map(a => (
+                      <tr key={a.agentId} className="text-gray-300">
+                        <td className="py-3">
+                          <p className="font-medium">{a.businessName}</p>
+                          {a.businessEmail && <p className="text-gray-600 text-xs">{a.businessEmail}</p>}
+                        </td>
+                        <td className="py-3 text-gray-500 font-mono text-xs">{a.agentId}</td>
+                        <td className="py-3 text-right text-purple-400 font-semibold">{a.total}</td>
+                        <td className="py-3 text-right">
+                          {a.unanswered > 0
+                            ? <span className={badge('bg-red-900/40 text-red-400')}>{a.unanswered}</span>
+                            : <span className={badge('bg-green-900/40 text-green-500')}>0</span>}
+                        </td>
+                        <td className="py-3 text-right text-gray-500 text-xs">{timeAgo(a.lastActive)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         )}
+
+        {/* Tab: Recent Activity */}
+        {tab === 'activity' && (
+          <div className={card}>
+            <h2 className="text-gray-300 font-semibold mb-5">Recent Activity</h2>
+            {d.recentActivity.length === 0 ? (
+              <p className="text-gray-600 text-sm">No activity yet.</p>
+            ) : (
+              <div className="divide-y divide-gray-800">
+                {d.recentActivity.map((r, i) => (
+                  <div key={i} className="py-3 flex items-start gap-3">
+                    <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${r.unanswered ? 'bg-red-500' : 'bg-green-500'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-200 text-sm truncate">{r.question}</p>
+                      <p className="text-gray-600 text-xs mt-0.5">{r.businessName}</p>
+                    </div>
+                    <span className="text-gray-600 text-xs whitespace-nowrap">{timeAgo(r.timestamp)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <p className="text-gray-700 text-xs text-center">
+          Green dot = answered · Red dot = unanswered
+        </p>
       </div>
-    </main>
+    </div>
   )
 }
