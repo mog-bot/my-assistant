@@ -177,8 +177,17 @@ export default function CreateAgent() {
     return (0.299 * r + 0.587 * g + 0.114 * b) > 150
   })()
 
+  // Auto-generate a stable agent ID from business email/name so each client is tracked separately
+  const agentId = (businessEmail || businessName || 'demo')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40) || 'demo'
+
   const embedCode = [
     `<script src="https://my-assistant-bhre.vercel.app/widget.js"`,
+    ` data-agent-id="${agentId}"`,
     ` data-color="${activeColor}"`,
     ` data-bg="${activeBg}"`,
     ` data-font="${activeFont}"`,
