@@ -774,9 +774,11 @@ Answer their question clearly and concisely. Be specific to ${platformName}. If 
                 className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg"
                 style={{ backgroundColor: activeColor }}
               >
-                {launcherIcon
-                  ? <span style={{ fontSize: '26px', lineHeight: 1 }}>{launcherIcon}</span>
-                  : <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                {logoUrl
+                  ? <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  : launcherIcon
+                    ? <span style={{ fontSize: '26px', lineHeight: 1 }}>{launcherIcon}</span>
+                    : <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 }
               </div>
             </div>
